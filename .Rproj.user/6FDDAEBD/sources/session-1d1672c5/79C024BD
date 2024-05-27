@@ -1,0 +1,28 @@
+{
+    "id": "79C024BD",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1716576831617.0,
+    "source_on_save": false,
+    "relative_order": 8,
+    "properties": {
+        "id": "d6e0f4842c4549d9a1e397b4a351dc6d",
+        "name": "FCs_list",
+        "title": "FCs_list",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2135902059009,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1716576831617,
+    "read_only": false,
+    "read_only_alternatives": []
+}
