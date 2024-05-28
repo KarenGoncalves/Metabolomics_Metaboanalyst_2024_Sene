@@ -10,12 +10,18 @@ source("scripts/help_script/ANOVA_mets.R")
 in_files = list.files(path = "Inputs/",
                       pattern = "CleanUp_",
                       full.names = T)
+tableContrast <- 
+    data.frame(Numerator = c("AC9.1", "AC9.2", "AC9.3",
+                             "AC9.1", "AC9.2", "AC9.1"),
+               Denominator = c("E30", "E30", "E30", 
+                               "AC9.3", "AC9.3", "AC9.2"))
+
 for (i in 1:3) {
     
     AnalysisMode <- gsub("CleanUp_LCMSMS_(.+)_rawHeight.txt",
                          "\\1", basename(in_files[i]))
     plots_basename <- paste0("plots/", AnalysisMode)
-    
+    results_basename <- paste0("Results/", AnalysisMode)
     mSet<-InitDataObjects("conc", "stat", FALSE);
     mSet<-Read.TextData(mSet, in_files[i], "colu", "disc");
     mSet<-SanityCheckData(mSet);
@@ -37,11 +43,6 @@ for (i in 1:3) {
                                 format ="png", dpi=300, width=NA);
     
     # Perform fold-change analysis on uploaded data, unpaired
-    tableContrast <- 
-        data.frame(Numerator = c("AC9.1", "AC9.2", "AC9.3",
-                                 "AC9.1", "AC9.2", "AC9.1"),
-                   Denominator = c("E30", "E30", "E30", 
-                                   "AC9.3", "AC9.3", "AC9.2"))
     mSet$analSet$fc<- MetaboAnalystR::GetFC(mSetObj = mSet, paired = F, 
                                             tableContrast = tableContrast)
     
@@ -98,6 +99,7 @@ for (i in 1:3) {
     }) %>% list_rbind
     
     write_delim(DAM_tables, 
-                paste0(plots_basename, "_DAM_table.txt"),
+                paste0(results_basename, "_DAM_table.txt"),
                 delim = "\t")
+    save(mSet, file = paste0(results_basename, "_mSet.RData"))
 }
