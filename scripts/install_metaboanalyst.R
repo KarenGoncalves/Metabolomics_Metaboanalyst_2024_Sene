@@ -3,10 +3,12 @@
 # SSPA was removed in bioconductor version 3.14, install with url
 install.packages("https://bioconductor.org/packages/3.12/bioc/bin/windows/contrib/4.0/SSPA_2.30.0.zip")
 metanr_packages <- function(){
-    metr_pkgs <- c("impute", "pcaMethods", "globaltest", "GlobalAncova", "gtools",
+    metr_pkgs <- c("Cairo", "Rserve", "qs", "pROC", "caret", "glasso",
+                   "impute", "pcaMethods", "globaltest", "GlobalAncova", "gtools",
                    "Rgraphviz", "preprocessCore", "genefilter", "SSPA", 
                    "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", 
-                   "MSnbase", "multtest", "RBGL", "edgeR", "fgsea", "devtools", "crmn")
+                   "MSnbase", "multtest", "RBGL", "edgeR", "fgsea", 
+                   "devtools", "crmn")
     
     list_installed <- installed.packages()
     new_pkgs <- subset(metr_pkgs, !(metr_pkgs %in% list_installed[, "Package"]))
@@ -22,6 +24,4 @@ metanr_packages <- function(){
 }
 metanr_packages()
 
-# Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, 
-                         build_vignettes = TRUE, build_manual =T)
+install.packages("D:/MetaboAnalystR_4.0.0.tar.gz")

@@ -23,6 +23,7 @@ for (fileNumber in 1:3) {
     }) %>%
         as.data.frame
     rownames(measures) = input[-1,1]
+    
     normalized_measures <- apply(measures, 2, \(x) {
         TIC = sum(x)
         x/TIC
@@ -65,15 +66,14 @@ for (fileNumber in 1:3) {
                     0)
             })
         }) %>% as.data.frame(row.names = input$Sample[-1])
-    measurements = measurements [!apply(measurements, 1, \(x) all(x == "0")),]
-    QCs = input[input$Sample %in% c("Label", rownames(measurements)),
-            grep("QC", names(input))] 
+    measures = measures [!apply(measurements, 1, \(x) all(x == "0")),
+                         metadata$Replicates[!metadata$Groups %in% c("BLANK")],]
     
-    cbind(Sample = c("Label", rownames(measurements)), 
-          rbind((data.frame(metadata$Groups[!metadata$Groups %in% c("BLANK", "QC")], 
-                     row.names = metadata$Replicates[!metadata$Groups %in% c("BLANK", "QC")]) %>% 
-              unname %>% t), measurements),
-          QCs
+    
+    cbind(Sample = c("Label", rownames(measures)), 
+          rbind((data.frame(metadata$Groups[metadata$Groups !="BLANK"], 
+                     row.names = metadata$Replicates[metadata$Groups !="BLANK"]) %>% 
+              unname %>% t), measures)
     ) %>% as_tibble %>%
         write_delim(file = out_files[fileNumber], delim = "\t", append = F)
 }
