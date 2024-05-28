@@ -101,5 +101,7 @@ for (i in 1:3) {
     write_delim(DAM_tables, 
                 paste0(results_basename, "_DAM_table.txt"),
                 delim = "\t")
+    write_delim(FC_res_long, 
+                paste0(results_basename, "_FC_result.txt"))
     save(mSet, file = paste0(results_basename, "_mSet.RData"))
 }
