@@ -57,5 +57,6 @@ Mets_heatmap_data %>%
           axis.text.x = element_blank(),
           legend.position = "bottom",
           axis.ticks = element_blank())
-
+ggsave("plots/Heatmap_metabolites_FC2.png",
+       dpi=300, width=8, height=5)
     
