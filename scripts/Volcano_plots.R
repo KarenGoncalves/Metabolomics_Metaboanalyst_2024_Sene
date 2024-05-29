@@ -41,7 +41,9 @@ FC_ANOVA <- FC_res_long %>%
                case_when(log2FC > 2 & pvalue_posthoc < .05 ~ "Up-regulated",
                          log2FC < -2 & pvalue_posthoc < .05 ~ "Down-regulated",
                          .default = "No"))
-
+write_delim(FC_ANOVA, 
+            "Results/FC_ANOVA_allmodes.txt",
+            delim = "\t")
 FC_limit = max(abs(FC_ANOVA$log2FC))
 
 FC_ANOVA$plotContrast <- 
