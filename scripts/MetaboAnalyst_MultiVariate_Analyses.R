@@ -2,6 +2,7 @@
 # install.packages(c("ellipse", "pls"))
 library(tidyverse)
 library(MetaboAnalystR)
+library(ggrepel)
 source("scripts/help_script/calculate.pls.vip.R")
 theme_classic() %>% theme_set()
 
@@ -60,7 +61,11 @@ for (i in 1:3) {
     
     #### OPLS-DA ####
     mSet = OPLSR.Anal(mSetObj = mSet, reg = T)    
-    mSet = OPLSDA.Permut(mSetObj = mSet, num = 1000)
+    mSet = OPLSDA.Permut(mSetObj = mSet, num = 10000)
+    mSet = PlotOPLS.Permutation(mSet, 
+                         imgName = paste0(plot_basename[[i]], 
+                                          "OPLS_perm_2_"), 
+                         format = "png", dpi=300, width=NA)
     # Create a 2D oPLS-DA score plot
     mSet<-PlotOPLS2DScore(mSet, 
                           imgName = paste0(plot_basename[[i]], 
@@ -77,11 +82,21 @@ for (i in 1:3) {
     mSet<-PlotOPLS.Splot(mSet, 
                          imgName = paste0(plot_basename[[i]], 
                                           "OPLS_splot_0_"), 
-                         "all", "png", 72, width=NA);
-    # 
-    # # Create a plot of features ranked by importance
-    # mSet<-PlotOPLS.Imp(mSet, "OPLS_imp_0_", "png", 72, width=NA, "vip", "tscore", 15,FALSE)
+                         "all", "png", 300, width=NA);
+    mSet$analSet$oplsda$splot.mat %>% 
+        as.data.frame %>% 
+        mutate(Feature = rownames(.)) %>% 
+        ggplot(aes(x = `p[1]`, y = `p(corr)[1]`, label = Feature)) + 
+        geom_point() + 
+        geom_text_repel()
+    ggsave(paste0(plot_basename[[i]], 
+                  "OPLS_splot_0.png"),
+           width = 6, height = 6, dpi = 300)
     # 
     # # Create a plot of the model overview
-    # mSet<-PlotOPLS.MDL(mSet, "OPLS_mdl_0_", format = "png", dpi=72, width=NA)
+    mSet<-PlotOPLS.MDL(mSet, 
+                       imgName = paste0(plot_basename[[i]], 
+                                        "OPLS_mdl_0_"), 
+                       format = "png", 
+                       dpi=72, width=NA)
 }
