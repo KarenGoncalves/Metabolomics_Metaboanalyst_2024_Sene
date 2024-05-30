@@ -22,8 +22,13 @@ for (i in 1:3) {
                          "\\1", basename(in_files[i]))
     plots_basename <- paste0("plots/", AnalysisMode, "/")
     results_basename <- paste0("Results/", AnalysisMode)
-    mSet<-InitDataObjects("conc", "stat", FALSE);
-    mSet<-Read.TextData(mSet, in_files[i], "colu", "disc");
+    mSet<-InitDataObjects(data.type = "pktable", 
+                          anal.type = "stat", 
+                          paired = FALSE);
+    mSet<-Read.TextData(mSetObj = mSet, 
+                        filePath = in_files[i], 
+                        format = "colu", 
+                        lbl.type = "disc");
     mSet<-SanityCheckData(mSet);
     mSet<-ReplaceMin(mSet);
     mSet<-SanityCheckData(mSet);
