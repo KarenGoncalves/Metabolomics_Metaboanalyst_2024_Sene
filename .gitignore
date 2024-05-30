@@ -3,8 +3,5 @@
 .RData
 .Ruserdata
 *.qs
-anova_posthoc.csv
-anova_all_results.csv
-data_prefilter_qc_rsd.csv
-raw_dataview.csv
+*.csv
 Results/fold_change_*
