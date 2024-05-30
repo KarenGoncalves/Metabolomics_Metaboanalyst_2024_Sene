@@ -92,7 +92,7 @@ for (i in Analysis_modes) {
              y = bquote("-log"[10]~"pValue")) +
         theme_classic() +
         theme(legend.position = "bottom") 
-    ggsave(paste0("plots/", i, "_Volcano.png"),
+    ggsave(paste0("plots/", i, "/Volcano.png"),
            height=5, width=8)
 }
 
