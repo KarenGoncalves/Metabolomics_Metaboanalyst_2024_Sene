@@ -83,48 +83,39 @@ runPLS.Analysis <- function(mSetObj, compNum, iterations,
     inx.ord <- order(coef.mat[, 1], decreasing = T)
     coef.mat <- data.matrix(coef.mat[inx.ord, , drop = FALSE])
     mSetObj$analSet$plsda <- list(best.num = best.num, choice = "R2", 
-                                  coef.mat = coef.mat, fit.info = all.info,
-                                  coef_plot = coef_plot)
+                                  coef.mat = coef.mat, fit.info = all.info)
     
-    # mSetObj<-PlotPLSPairSummary(
-    #     mSetObj,
-    #     imgName = paste0(basenamePlots, "_pls_pair_0_"),
-    #     "png", 72, width=NA, 5)
-    # 
-    # mSetObj<-PlotPLS2DScore(
-    #     mSetObj,
-    #     imgName = paste0(basenamePlots, "_pls_score2d_0_"),
-    #     "png", 72, width=NA, 1, 2,
-    #     0.95,1,0)
-    # 
-    # mSetObj<-PlotPLS3DScoreImg(
-    #     mSetObj,
-    #     imgName = paste0(basenamePlots, "_pls_score3d_0_"),
-    #     "png", 72, width=NA,
-    #     1, 2, 3,
-    #     40)
-    # 
-    # 
-    # mSetObj<-PlotPLS.Classification(
-    #     mSetObj,
-    #     imgName = paste0(basenamePlots, "_pls_cv_0_"),
-    #     "png", 72, width=NA)
-    # 
+    mSetObj<-PlotPLSPairSummary(
+        mSetObj,
+        imgName = paste0(basenamePlots, "_pls_pair_0_"),
+        "png", 72, width=NA, 5)
+     
+    mSetObj<-PlotPLS2DScore(
+        mSetObj,
+        imgName = paste0(basenamePlots, "_pls_score2d_0_"),
+        "png", 72, width=NA, inx1 = 1, inx2 = 2,
+        reg = 0.95,show = 1,grey.scale = 0)
+    
+    mSetObj<-PlotPLS.Classification(
+        mSetObj,
+        imgName = paste0(basenamePlots, "_pls_cv_0_"),
+        "png", 72, width=NA)
+     
     mSetObj<-PlotPLS.Imp(
         mSetObj,
         imgName = paste0(basenamePlots, "_pls_imp_0_"),
         "png", 72, width=NA, type = "vip", feat.nm = "Comp. 1",
         feat.num=10, FALSE)
-    # # 
+     
     return(mSetObj)
 }
 
 plot_RegCoef <- \(mSetObj, comp){
-    pls.res <- mSetObj$analSet$plsr
-    coef_plot <- pls.res$coefficients[, , comp] %>%
+    pls.res = mSetObj$analSet$plsr
+    coef_plot = pls.res$coefficients[, , comp] %>%
         as.data.frame() 
     names(coef_plot) = gsub("mSetObj\\$dataSet\\$cls", "", names(coef_plot))
-    coef_plot <- coef_plot %>% mutate(Metabolites =  rownames(.)) %>%
+    coef_plot = coef_plot %>% mutate(Metabolites =  rownames(.)) %>%
         pivot_longer(cols = !Metabolites,
                      names_to = "Clones",
                      values_to = "Regression_coef") %>%

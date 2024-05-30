@@ -54,7 +54,7 @@ for (i in 1:3) {
                      iterations = 10000, 
                      method = "oscorespls",  
                      basenamePlots = plot_basename[[i]])
-    plot_RegCoef(mSet, 2)
+    plot_RegCoef(mSet, 1)
     
     #### OPLS-DA ####
     mSet = OPLSR.Anal(mSetObj = mSet, reg = T)    
