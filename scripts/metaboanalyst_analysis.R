@@ -20,7 +20,7 @@ for (i in 1:3) {
     
     AnalysisMode <- gsub("CleanUp_LCMSMS_(.+)_rawHeight.txt",
                          "\\1", basename(in_files[i]))
-    plots_basename <- paste0("plots/", AnalysisMode)
+    plots_basename <- paste0("plots/", AnalysisMode, "/")
     results_basename <- paste0("Results/", AnalysisMode)
     mSet<-InitDataObjects("conc", "stat", FALSE);
     mSet<-Read.TextData(mSet, in_files[i], "colu", "disc");
@@ -36,15 +36,16 @@ for (i in 1:3) {
                         ratio=FALSE, ratioNum=20)
     
     mSet<-PlotNormSummary(mSet, imgName = paste0(plots_basename,
-                                                 "_rowNormalization_"), 
+                                                 "rowNormalization_"), 
                           format ="png", dpi=300, width=NA);
     mSet<-PlotSampleNormSummary(mSet, imgName = paste0(plots_basename,
-                                                       "_colNormalization_"), 
+                                                       "colNormalization_"), 
                                 format ="png", dpi=300, width=NA);
     
     # Perform fold-change analysis on uploaded data, unpaired
-    mSet$analSet$fc<- MetaboAnalystR::GetFC(mSetObj = mSet, paired = F, 
-                                            tableContrast = tableContrast)
+    mSet$analSet$fc <- 
+        MetaboAnalystR::GetFC(mSetObj = mSet, paired = F, 
+                              tableContrast = tableContrast)
     
     # Plot fold-change analysis
     FC_res_table <- data.frame(IDs = mSet$analSet$fc$AC9.1_v_E30$fc.log %>% 
@@ -82,7 +83,7 @@ for (i in 1:3) {
               axis.ticks.x = element_blank(),
               legend.position = "bottom") +
         labs(x = "Analytes", y = bquote("log"[2]~"FC"))
-    ggsave(paste0(plots_basename, "_FCAnalysis.png"), dpi = 300,
+    ggsave(paste0(plots_basename, "FCAnalysis.png"), dpi = 300,
            height = 7, width = 6)
     
     # To view fold-change 
