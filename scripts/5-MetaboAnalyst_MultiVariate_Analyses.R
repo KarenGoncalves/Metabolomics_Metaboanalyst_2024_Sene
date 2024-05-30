@@ -11,7 +11,7 @@ Analysis_modes = c("HILIC_Positive",
                    "RP_Negative")
 inFiles <- paste0("Results/", Analysis_modes, "_mSet.RData")
 plot_basename <- paste0("plots/", Analysis_modes, "/")
-i = 1
+# i = 1
 
 for (i in 1:3) {
     rm("mSet")
@@ -61,7 +61,7 @@ for (i in 1:3) {
     
     #### OPLS-DA ####
     mSet = OPLSR.Anal(mSetObj = mSet, reg = T)    
-    mSet = OPLSDA.Permut(mSetObj = mSet, num = 10000)
+    mSet = OPLSDA.Permut(mSetObj = mSet, num = 1000)
     mSet = PlotOPLS.Permutation(mSet, 
                          imgName = paste0(plot_basename[[i]], 
                                           "OPLS_perm_2_"), 
@@ -99,4 +99,5 @@ for (i in 1:3) {
                                         "OPLS_mdl_0_"), 
                        format = "png", 
                        dpi=72, width=NA)
+    save(mSet, file = inFiles[i])
 }
