@@ -17,6 +17,8 @@ tableContrast <-
                                "AC9.3", "AC9.3", "AC9.2"))
 FDR_threshold = 0.05
 adjusted_FDR_threshold = 0.00833333233333
+FC_threshold = 2
+
 met_abundance <- list()
 differential_abundance <- list()
 
@@ -41,13 +43,15 @@ for (i in 1:3) {
                             levels = tableContrast[j,])
         
         SAM = siggenes::sam(t(mSet_subset_norm), 
-                                  cl = cls_subset, 
-                                  method = "d.stat", B=100, 
-                                  gene.names = names(mSet_subset_norm), 
-                                  med = F, use.dm = T, 
-                                  var.equal = T,
-                                  control = samControl(n.delta = 10),
-                                  R.fold = 2)
+                            cl = cls_subset, 
+                            method = "d.stat", B=100, 
+                            gene.names = names(mSet_subset_norm), 
+                            med = F, use.dm = T, 
+                            var.equal = T,
+                            control = samControl(n.delta = 120),
+                            R.fold = FC_threshold
+                            
+        )
         SAM@msg = c(contrastName, SAM@msg)
         
         deltaValue = findDelta(SAM, fdr = adjusted_FDR_threshold)
@@ -65,7 +69,10 @@ for (i in 1:3) {
                        Contrast = contrastName,
                        plotContrast = paste0(numerator, " vs ", denominator),
                        Metabolite = names(SAM@d),
-                       pValue = SAM@p.value) 
+                       Ratio_Change = SAM@fold,
+                       FoldChange = log2(SAM@fold),
+                       pValue = SAM@p.value,
+                       padj = SAM@q.value) 
                          
     }
     differential_abundance[[i]] <- 
@@ -74,5 +81,7 @@ for (i in 1:3) {
 dev.off()
 }
 
-
+for (i in list.files(".", patter=".(qs|csv)")) {
+    file.remove(i)
+}
 save(differential_abundance, file = "Results/Siggenes_DAAs.RData")

@@ -1,11 +1,6 @@
 # MetaboAnalyst Analysis
-# install.packages("agricolae")
 library(tidyverse)
 library(MetaboAnalystR)
-library(car)
-library(dunn.test)
-library(agricolae)
-source("scripts/help_script/ANOVA_mets.R")
 
 in_files = list.files(path = "Inputs/",
                       pattern = "CleanUp_",
@@ -47,33 +42,6 @@ for (i in 1:3) {
     mSet<-PlotSampleNormSummary(mSet, imgName = paste0(plots_basename,
                                                        "colNormalization_"), 
                                 format ="png", dpi=300, width=NA);
-    
-    # Perform fold-change analysis on uploaded data, unpaired
-    mSet$analSet$fc <- 
-        MetaboAnalystR::GetFC(mSetObj = mSet, paired = F, 
-                              tableContrast = tableContrast)
-    
-    # Plot fold-change analysis
-    FC_res_table <- data.frame(IDs = mSet$analSet$fc[[1]]$fc.log %>% 
-                                   names)
-    for (i in names(mSet$analSet$fc)) {
-        FC_res_table[[i]] = mSet$analSet$fc[[i]]$fc.log
-    }
-    
-    FC_res_long <- FC_res_table %>% pivot_longer(cols = !IDs,
-                                                 values_to = "log2FC",
-                                                 names_to = "Contrasts") %>%
-        mutate(plotContrast = gsub("_v_", " vs ", Contrasts)) %>%
-        separate(col = Contrasts, into = c("Clone1", "Clone2"),
-                 sep = "_v_") %>%
-        rename("Metabolite" = IDs)
-    
-    
-    write_delim(FC_res_long, 
-                paste0(results_basename, "_FC_result.txt"))
     save(mSet, file = paste0(results_basename, "_mSet.RData"))
 }
 
-for (i in list.files(".", patter=".(qs|csv)")) {
-    file.remove(i)
-}

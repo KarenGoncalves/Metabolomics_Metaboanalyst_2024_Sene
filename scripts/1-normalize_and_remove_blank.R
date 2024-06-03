@@ -1,6 +1,6 @@
 library(tidyverse)
 
-blank_threshold = 5
+blank_threshold = 3
 in_files = list.files(path = "Inputs",
                       pattern = "^LCMSMS",
                       full.names = T)
