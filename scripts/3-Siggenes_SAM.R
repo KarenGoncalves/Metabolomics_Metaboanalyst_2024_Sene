@@ -73,6 +73,6 @@ for (i in 1:3) {
         list_rbind()
 dev.off()
 }
-dev.off()
+
 
 save(differential_abundance, file = "Results/Siggenes_DAAs.RData")
