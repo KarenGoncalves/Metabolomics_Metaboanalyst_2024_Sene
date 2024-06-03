@@ -23,23 +23,15 @@ for (fileNumber in 1:3) {
     }) %>%
         as.data.frame
     rownames(measures) = input[-1,1]
-    
-    normalized_measures <- apply(measures, 2, \(x) {
-        TIC = sum(x)
-        x/TIC
-    }) %>%
-        as.data.frame
-    measures_IDs = measures %>%
-        mutate(ID = rownames(.))
-    
-    blank_value = apply(normalized_measures[, metadata$Groups == "BLANK"],
+
+    blank_value = apply(measures[, metadata$Groups == "BLANK"],
                         1, max)
     
     greater_than_blank = 
-        apply(normalized_measures[, !metadata$Groups %in% c("BLANK", "QC")], 
+        apply(measures[, !metadata$Groups %in% c("BLANK", "QC")], 
               2, \(x) {
                   x > blank_value*blank_threshold
-              }) %>% data.frame(row.names = rownames(normalized_measures))
+              }) %>% data.frame(row.names = rownames(measures))
     
     clones = metadata[!metadata$Groups %in% c("BLANK", "QC"),]$Groups %>% unique
     numberRepsPresent = 
