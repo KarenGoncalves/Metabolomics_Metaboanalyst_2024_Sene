@@ -17,10 +17,16 @@ tableContrast <-
                              "AC9.1", "AC9.2", "AC9.1"),
                Denominator = c("E30", "E30", "E30", 
                                "AC9.3", "AC9.3", "AC9.2"))
-FDR_threshold = 0.001
-adjusted_FDR_threshold = 0.000165
+FDR_threshold = 0.05
+adjusted_FDR_threshold = 0.00833333233333
 met_abundance <- list()
 differential_abundance <- list()
+FoldChanges <- read_delim(paste0("Results/FC_ANOVA_allmodes.txt")) %>%
+    dplyr::select(Metabolite,
+                  Clone1, Clone2,
+                  log2FC, plotContrast,
+                  AnalysisMode)
+
 for (i in 1:3) {
     pdf(file = paste0(plot_basename[i], 
                       "Differential_analysis.pdf"),
@@ -62,85 +68,80 @@ for (i in 1:3) {
         )
         
         differential_abundance[[i]][[contrastName]] <- 
-            data.frame(Analysis_type = Analysis_modes[i],
+            data.frame(AnalysisMode = Analysis_modes[i],
                        Contrast = contrastName,
                        plotContrast = paste0(numerator, " vs ", denominator),
-                       Metabolites = names(SAM@d),
-                       FC = SAM@fold,
-                       log2FC = log2(SAM@fold),
-                       pValue = SAM@p.value) %>%
-            pivot_longer(cols = c(FC, log2FC, pValue),
-                         names_to = "ResultType",
-                         values_to = "Value")
+                       Metabolite = names(SAM@d),
+                       pValue = SAM@p.value) 
                          
     }
     differential_abundance[[i]] <- 
         differential_abundance[[i]] %>%
-        list_rbind() %>%
-        pivot_wider(names_from = ResultType,
-                    values_from = Value)
-    # mSet <- SAM.Anal(mSetObj = mSet, 
-    #                  method = "d.stat", # d.stat for parametric 
-    #                  paired = F,
-    #                  varequal = T, 
-    #                  imgName = paste0(plot_basename[i], 
-    #                                   "Differential_analysis_"),
-    #                  dpi=300)
-    # mSet<-PlotSAM.FDR(mSet, 
-    #                   imgName = paste0(plot_basename[i], 
-    #                                    "Differential_analysis_FDR"),
-    #                   format = "png", 
-    #                   dpi=300, width=NA)
-    # ?PlotSAM.Cmpd
-    # # Create a SAM plot of results
-    # mSet<-PlotSAM.Cmpd(mSet, 
-    #                    imgName = paste0(plot_basename[i], 
-    #                                     "Differential_analysis_ImportantFeaures_"),
-    #                    format = "png", dpi=300, width=NA)
+        list_rbind()
 dev.off()
 }
 dev.off()
 
-subset_diff_abundance <- 
+
+og_diff_abundance <- 
     differential_abundance %>%
     list_rbind() %>%
-    filter(!is.na(FC), pValue < .05,
-           #!grepl("AC9.2", Contrast)
-           )
+    left_join(FoldChanges, 
+              by = c("Metabolite", "AnalysisMode", "plotContrast")) %>%
+    filter(pValue < FDR_threshold,
+           ) %>% 
+    mutate(Regulation = case_when(log2FC < -1 ~ "Down-regulated",
+                                  log2FC > 1 ~ "Up-regulated",
+                                  .default = "None")) 
 
-order_mets = ((subset_diff_abundance %>%
-    dplyr::select(Contrast,log2FC, Metabolites) %>%
-    pivot_wider(names_from = Contrast, values_from = log2FC,
-                values_fill = 0) %>%
-    data.frame(row.names = .$Metabolites))[-1] %>%
-    as.matrix() %>% dist() %>% hclust)
+subsets_diff_abundance <- 
+    sapply(paste0("AC9.", 1:3), simplify = F, \(x) {
+        og_diff_abundance %>%
+     filter(!grepl(x, plotContrast))
+    })
 
-color_limit = max(abs(subset_diff_abundance$log2FC)) %>%
-    ceiling()
-
-color_scale = c(-color_limit, -color_limit/2,
-                0, color_limit/2, color_limit)
-subset_diff_abundance %>%
-    mutate(ordered_mets = Metabolites %>%
-               factor(levels = order_mets$labels[order_mets$order]),
-           Contrast_ordered = plotContrast %>%
-               factor(levels = sapply(1:6, \(x) paste(tableContrast$Numerator[x], "vs",
-                                                      tableContrast$Denominator[x]))
-                      )
-           ) %>%
-    ggplot(aes(ordered_mets, y = Contrast_ordered, fill = log2FC)) +
-    geom_tile() +
-    scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
-                         name = "Fold change",
-                         limits = range(color_scale),
-                         breaks = color_scale,
-                         labels = color_scale) +
-    labs(x = "", y="", fill="Fold Change") +
-    theme_classic() +
-    theme(legend.position = "bottom",
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
-                          
+pdf("plots/Siggenes_FC.pdf", onefile = T,
+    width=8, height=6)
+list("Original" = og_diff_abundance,
+     "AC9.2_AC9.3" = subsets_diff_abundance[[1]],
+     "AC9.1_AC9.3" = subsets_diff_abundance[[2]],
+     "AC9.1_AC9.2" = subsets_diff_abundance[[3]]) %>% 
+    sapply(simplify = F, \(x) {
+        order_mets = ((x %>%
+                           dplyr::select(Contrast,log2FC, Metabolite) %>%
+                           pivot_wider(names_from = Contrast, values_from = log2FC,
+                                       values_fill = 0) %>%
+                           data.frame(row.names = .$Metabolite))[-1] %>%
+                          as.matrix() %>% dist() %>% hclust)
+        
+        color_limit = max(abs(x$log2FC)) %>%
+            ceiling()
+        
+        color_scale = c(-color_limit, -color_limit/2,
+                        0, color_limit/2, color_limit)
+        x %>%
+            mutate(ordered_mets = Metabolite %>%
+                       factor(levels = order_mets$labels[order_mets$order]),
+                   Contrast_ordered = plotContrast %>%
+                       factor(levels = sapply(1:6, \(x) paste(tableContrast$Numerator[x], "vs",
+                                                              tableContrast$Denominator[x]))
+                       )
+            ) %>%
+            ggplot(aes(ordered_mets, y = Contrast_ordered, fill = log2FC)) +
+            geom_tile() +
+            scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
+                                 name = "Fold change",
+                                 limits = range(color_scale),
+                                 breaks = color_scale,
+                                 labels = color_scale) +
+            labs(x = "", y="", fill="Fold Change") +
+            theme_classic() +
+            theme(legend.position = "bottom",
+                  axis.text.x = element_blank(),
+                  axis.ticks.x = element_blank())
+        
+    })
+dev.off()
 
 DAMs_abundance <- sapply(met_abundance, simplify = F, \(x) {
     (t(x) %>% as.data.frame())[1:12]
@@ -203,3 +204,4 @@ zscore_DAMs %>%
 
 ggsave("plots/Relative_abundance_DAAs.pdf", 
        height = 6, width = 8)
+
