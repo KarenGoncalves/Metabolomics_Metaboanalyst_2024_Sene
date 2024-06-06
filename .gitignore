@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+*.qs
+*.csv
+Results/fold_change_*
