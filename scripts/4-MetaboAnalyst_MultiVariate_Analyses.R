@@ -62,10 +62,41 @@ for (i in 1:3) {
     #### OPLS-DA ####
     mSet = OPLSR.Anal(mSetObj = mSet, reg = T)    
     mSet = OPLSDA.Permut(mSetObj = mSet, num = 1000)
-    mSet = PlotOPLS.Permutation(mSet, 
-                         imgName = paste0(plot_basename[[i]], 
-                                          "OPLS_perm_2_"), 
-                         format = "png", dpi=300, width=NA)
+    OPLS_permut = data.frame(R2Y = mSet$analSet$oplsda$perm.res$r.vec, 
+               Q2 = mSet$analSet$oplsda$perm.res$q.vec) %>%
+        pivot_longer(cols = everything(),
+                     values_to = "Values",
+                     names_to = "Coefficient")
+    pvalues = OPLS_permut %>% group_by(Coefficient) %>%
+        summarise(pValue = sum(Values[-1] >= Values[1]),
+                  text = ifelse(pValue == 0, "<0.001", 
+                             paste0("=", pValue/1000)),
+                  Value = Values[1])
+    OPLS_permut %>% 
+        ggplot() + 
+        geom_histogram(aes(x = Values, fill = Coefficient), 
+                       bins = 200, alpha = .5,
+                       show.legend = T) +
+        geom_vline(xintercept = pvalues$Value[2], 
+                   color = "blue", show.legend = T) +
+        annotate(geom="text", x = min(pvalues$Value)-.2, y = 50, color = "blue",
+                 label = paste0("R2Y=", pvalues$Value[2],
+                                "\np", pvalues$text[2],
+                                " (", pvalues$pValue[2], "/1000)")
+                 )  +
+        geom_vline(xintercept = pvalues$Value[1], 
+                                color = "red", show.legend = T) +
+        annotate(geom="text", x = min(pvalues$Value)-.2, y = 100, color = "red",
+                 label = paste0("Q2=", pvalues$Value[1],
+                                "\np", pvalues$text[1],
+                                " (", pvalues$pValue[1], "/1000)")
+        )  + xlim(c(0, 1)) +
+        scale_y_continuous(breaks = seq(0, 400, 50)) +
+        labs(x = "Permutations", y="Frequency", fill = "")
+        
+    ggsave(paste0(plot_basename[[i]], 
+                  "OPLS_perm_2.png"), width=5, height=4)
+    
     # Create a 2D oPLS-DA score plot
     mSet<-PlotOPLS2DScore(mSet, 
                           imgName = paste0(plot_basename[[i]], 
