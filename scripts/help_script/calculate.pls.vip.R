@@ -87,23 +87,23 @@ runPLS.Analysis <- function(mSetObj, compNum, iterations,
     
     mSetObj<-PlotPLSPairSummary(
         mSetObj,
-        imgName = paste0(basenamePlots, "_pls_pair_0_"),
+        imgName = paste0(basenamePlots, "PLS_pair_0_"),
         "png", 72, width=NA, 5)
      
     mSetObj<-PlotPLS2DScore(
         mSetObj,
-        imgName = paste0(basenamePlots, "_pls_score2d_0_"),
+        imgName = paste0(basenamePlots, "PLS_score2d_0_"),
         "png", 72, width=NA, inx1 = 1, inx2 = 2,
         reg = 0.95,show = 1,grey.scale = 0)
     
     mSetObj<-PlotPLS.Classification(
         mSetObj,
-        imgName = paste0(basenamePlots, "_pls_cv_0_"),
+        imgName = paste0(basenamePlots, "PLS_cv_0_"),
         "png", 72, width=NA)
      
     mSetObj<-PlotPLS.Imp(
         mSetObj,
-        imgName = paste0(basenamePlots, "_pls_imp_0_"),
+        imgName = paste0(basenamePlots, "PLS_imp_0_"),
         "png", 72, width=NA, type = "vip", feat.nm = "Comp. 1",
         feat.num=10, FALSE)
      
