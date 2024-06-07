@@ -42,3 +42,7 @@ annotation_DAAs <-
                                     `MS/MS matched` == T),
                                `Metabolite name`, "Unknown")
 )
+
+write_delim(annotation_DAAs,
+            file="Results/annotation_DAAs.txt",
+            delim="\t", na="NA")
