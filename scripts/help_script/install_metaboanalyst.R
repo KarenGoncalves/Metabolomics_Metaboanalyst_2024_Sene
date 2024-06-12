@@ -24,4 +24,4 @@ metanr_packages <- function(){
 }
 metanr_packages()
 
-install.packages("D:/MetaboAnalystR_4.0.0.tar.gz")
+# install.packages("D:/MetaboAnalystR_4.0.0.tar.gz")
