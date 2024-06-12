@@ -2,7 +2,7 @@ library(tidyverse)
 
 blank_threshold = 3
 in_files = list.files(path = "Inputs",
-                      pattern = "^LCMSMS",
+                      pattern = "^LCMSMS.*rawHeight.txt",
                       full.names = T)
 out_files = sapply(in_files, \(x) {
     paste0("Inputs/CleanUp_", basename(x)) 
