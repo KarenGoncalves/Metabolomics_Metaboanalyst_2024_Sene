@@ -34,7 +34,7 @@ for (fileNumber in 1:3) {
               }) %>% data.frame(row.names = rownames(measures))
     
     clones = metadata[!metadata$Groups %in% c("BLANK", "QC"),]$Groups %>% unique
-    numberRepsPresent = 
+    present_twoMore_reps = 
         sapply(clones, \(x) {
             colsInterest = (metadata %>%
                                 filter(Groups == x))$Replicates
@@ -51,9 +51,9 @@ for (fileNumber in 1:3) {
            simplify = T, \(colName) {
             
             cloneName = metadata$Groups[metadata$Replicates == colName]
-            sapply(1:nrow(numberRepsPresent), \(met) {
+            sapply(1:nrow(present_twoMore_reps), \(met) {
                 ifelse(
-                    numberRepsPresent[met, cloneName],
+                    present_twoMore_reps[met, cloneName],
                     measures_greater_than_blank[met+1, colName],
                     0)
             })
