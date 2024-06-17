@@ -1,6 +1,7 @@
 # Annotate deregulated analytes
 library(tidyverse)
 library(ggrepel)
+library(RColorBrewer)
 #### Variables ####
 Analysis_modes = c("HILIC_Positive",
                    "RP_Positive",
@@ -30,7 +31,10 @@ differential_abundance_sig <-
 DAM_ids <- differential_abundance_sig %>%
     select(Rt, Mz, AnalysisMode) %>%
     unique
-
+tableContrast = unique(differential_abundance_sig %>%
+                           select(Contrast)) %>%
+    separate(col = Contrast,
+             into = c("Numerator", "Denominator"), sep = "_v_")
 #### Get info on DAAs ####
 annotation_DAAs <- 
     inner_join(annotation, DAM_ids,
@@ -51,14 +55,29 @@ Annotation_DAAs <- left_join(annotation_DAAs,
                gsub(pattern="^l-", replacement="L-") %>%
                gsub(pattern="^(NCGC\\d+-\\d+).+$",
                     replacement="\\1") %>%
-               gsub(pattern="(2R,3S,4S,5R,6R)-6-(((4S,5aS,7S,11aR,12aS)-4,7-dihydroxy-3-((2R,5S)-5",
-                    replacement="Cucurbitacin glycoside", fixed = T) %>%
-               gsub(pattern="(2S,3S,4S,5S,6R)-2-(((2aR,4S,5aS,7S,11aR,12aS)-4-hydroxy-3",
-                    replacement="Cyclocarposide", fixed = T) %>%
-               gsub(pattern="(4aR,5aS,9R)-9-ethynyl-9a,11b-dimethylhexadecahydrocyclopenta[1,2]phenanthro",
-                    replacement="Estrane steroid", fixed = T) %>%
-               gsub(pattern="(R)-((2R,3S,4S,5R,6S)-6-((3-(2,3-dihydrobenzo[b][1,4]dioxin-6-yl)-4-oxo-4H-chromen-7-yl)oxy)-3,4,",
-                    replacement="Isoflavonoid O-glycosides", fixed = T)
+               gsub(pattern="(2R,3S,4S,5R,6R)-6-(((4S,5aS,7S,11aR,12aS)-4,7-dihydroxy-3-((2R,5S)-5.+",
+                    replacement="Cucurbitacin glycoside [1]", fixed=T) %>%
+               gsub(pattern="(2S,3S,4S,5S,6R)-2-(((2aR,4S,5aS,7S,11aR,12aS)-4-hydroxy-3-((2R,5S)-5-.+",
+                    replacement="Cucurbitacin glycoside [2]", fixed=T) %>%
+               gsub(pattern="(2R,3S,4S,5R,6R)-6-(((4S,5aS,7S,11aR,12aS)-4,7-dihydroxy-3-((2R,5S)-5-.+",
+                    replacement="Cucurbitacin glycoside [3]", fixed=T) %>%
+               gsub(pattern="(2S,3S,4S,5S,6R)-2-(((2aR,4S,5aS,7S,11aR,12aS)-4-hydroxy-3.+",
+                    replacement="Cyclocarposide", fixed=T) %>%
+               gsub(pattern="(4aR,5aS,9R)-9-ethynyl-9a,11b-dimethylhexadecahydrocyclopenta[1,2]phenanthro.+",
+                    replacement="Estrane steroid", fixed=T) %>%
+               gsub(pattern="(R)-((2R,3S,4S,5R,6S)-6-((3-(2,3-dihydrobenzo[b][1,4]dioxin-6-yl)-4-oxo-4H-chromen-7-yl)oxy)-3,4,.+",
+                    replacement="Isoflavonoid O-glycoside [1]", fixed=T) %>%
+               gsub(pattern="N-((octahydro-1H-quinolizin-1-yl)methyl)-2,4,5,6-tetrahydrocyclopenta[c]pyrazole-3-carboxamide",
+                    replacement="Quinolizine", fixed=T) %>%
+               gsub(pattern="2-(3,4-dimethoxyphenyl)-7-methoxy-4H-chromen-4-one",
+                replacement="7-O-methylated flavonoid", fixed=T) %>%
+               gsub(pattern="(R)-((2R,3S,4S,5R,6S)-6-((3-(2,3-dihydrobenzo[b][1,4]dioxin-6-yl)-4-oxo-4H-chromen-7-yl)oxy)-3,4,5-trihydroxytetrahydro-2H-pyran-2-yl)methyl 2-((tert-butoxycarbonyl)amino)-3-phenylpropanoate",
+                    replacement="Isoflavonoid O-glycoside [2]", fixed=T) %>%
+               gsub(pattern="methyl 2-((4-methyl-2-oxo-2H-chromen-7-yl)oxy)propanoate",
+                    replacement="Coumarin derivative", fixed=T) %>%
+               gsub(pattern="4-((1R,3S,5r,7r)-5,7-dimethyl-1,3-diazaadamantan-2-yl)-2-methoxyphenol",
+                    replacement="Methoxyphenol-type compound", fixed=T)
+           
     )
 
 # Replace with sentence case names
@@ -126,6 +145,7 @@ heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
     mutate(Metabolite_nameUnique = paste0(Clean_name, "\n", 
                                           Rt, "/", Mz)
     )
+
 
 heatmap_data %>% dplyr::filter(Clean_name != "Unknown") %>% 
     dplyr::select(INCHIKEY, Clean_name) %>% 
