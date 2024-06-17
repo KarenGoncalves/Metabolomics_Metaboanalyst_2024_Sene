@@ -55,29 +55,30 @@ Annotation_DAAs <- left_join(annotation_DAAs,
                gsub(pattern="^l-", replacement="L-") %>%
                gsub(pattern="^(NCGC\\d+-\\d+).+$",
                     replacement="\\1") %>%
-               gsub(pattern="(2R,3S,4S,5R,6R)-6-(((4S,5aS,7S,11aR,12aS)-4,7-dihydroxy-3-((2R,5S)-5.+",
+               gsub(pattern="(2R,3S,4S,5R,6R)-6-(((4S,5aS,7S,11aR,12aS)-4,7-dihydroxy-3-((2R,5S)-5-(2-hydroxypropan-2-yl)-2-methyltetrahydrofuran-2-yl)-2a,5a,8,8-tetramethylhexadecahydrocyclopenta[a]cyclopropa[e]phenanthren-9-yl)oxy)-5-(((2S,3R,4R)-3,4-dihydroxy-4-(hydroxymethyl)tetrahydrofuran-2-yl)oxy)-2-(hydroxymethyl)tetrahydro-2H-pyran-3,4-diol",
                     replacement="Cucurbitacin glycoside [1]", fixed=T) %>%
-               gsub(pattern="(2S,3S,4S,5S,6R)-2-(((2aR,4S,5aS,7S,11aR,12aS)-4-hydroxy-3-((2R,5S)-5-.+",
+               gsub(pattern="(2S,3S,4S,5S,6R)-2-(((2aR,4S,5aS,7S,11aR,12aS)-4-hydroxy-3-((2R,5S)-5-(2-hydroxypropan-2-yl)-2-methyltetrahydrofuran-2-yl)-2a,5a,8,8-tetramethyl-9-(((2S,3R,4S,5R)-3,4,5-trihydroxytetrahydro-2H-pyran-2-yl)oxy)hexadecahydrocyclopenta[a]cyclopropa[e]phen...",
                     replacement="Cucurbitacin glycoside [2]", fixed=T) %>%
-               gsub(pattern="(2R,3S,4S,5R,6R)-6-(((4S,5aS,7S,11aR,12aS)-4,7-dihydroxy-3-((2R,5S)-5-.+",
-                    replacement="Cucurbitacin glycoside [3]", fixed=T) %>%
                gsub(pattern="(2S,3S,4S,5S,6R)-2-(((2aR,4S,5aS,7S,11aR,12aS)-4-hydroxy-3.+",
                     replacement="Cyclocarposide", fixed=T) %>%
-               gsub(pattern="(4aR,5aS,9R)-9-ethynyl-9a,11b-dimethylhexadecahydrocyclopenta[1,2]phenanthro.+",
+               gsub(pattern="(4aR,5aS,9R)-9-ethynyl-9a,11b-dimethylhexadecahydrocyclopenta[1,2]phenanthro[8a,9-b]oxirene-3,9-diol",
                     replacement="Estrane steroid", fixed=T) %>%
-               gsub(pattern="(R)-((2R,3S,4S,5R,6S)-6-((3-(2,3-dihydrobenzo[b][1,4]dioxin-6-yl)-4-oxo-4H-chromen-7-yl)oxy)-3,4,.+",
-                    replacement="Isoflavonoid O-glycoside [1]", fixed=T) %>%
                gsub(pattern="N-((octahydro-1H-quinolizin-1-yl)methyl)-2,4,5,6-tetrahydrocyclopenta[c]pyrazole-3-carboxamide",
                     replacement="Quinolizine", fixed=T) %>%
                gsub(pattern="2-(3,4-dimethoxyphenyl)-7-methoxy-4H-chromen-4-one",
                 replacement="7-O-methylated flavonoid", fixed=T) %>%
                gsub(pattern="(R)-((2R,3S,4S,5R,6S)-6-((3-(2,3-dihydrobenzo[b][1,4]dioxin-6-yl)-4-oxo-4H-chromen-7-yl)oxy)-3,4,5-trihydroxytetrahydro-2H-pyran-2-yl)methyl 2-((tert-butoxycarbonyl)amino)-3-phenylpropanoate",
-                    replacement="Isoflavonoid O-glycoside [2]", fixed=T) %>%
+                    replacement="Isoflavonoid O-glycoside [1]", fixed=T) %>%
                gsub(pattern="methyl 2-((4-methyl-2-oxo-2H-chromen-7-yl)oxy)propanoate",
                     replacement="Coumarin derivative", fixed=T) %>%
                gsub(pattern="4-((1R,3S,5r,7r)-5,7-dimethyl-1,3-diazaadamantan-2-yl)-2-methoxyphenol",
-                    replacement="Methoxyphenol-type compound", fixed=T)
+                    replacement="Methoxyphenol-type compound", fixed=T) %>%
+               gsub(pattern="7-benzyl-11,14-dimethyl-16-(2-methylpropyl)-10,13-di(propan-2-yl)-17-oxa-1,5,8,11,14-pentazabicyclo[17.3.0]docosane-2,6,9,12,15,18-hexone",
+                    replacement="cyclodepsipeptide", fixed=T) %>%
+               gsub(pattern="7-hydroxy-3-(4-hydroxyphenyl)-8-((2S,3R,4R,5S,6R)-3,4,5-trihydroxy-6-(hydroxymethyl)tetrahydro-2H-pyran-2-yl)-4H-chromen-4-one",
+                    replacement="Isoflavonoid C-glycoside [1]", fixed=T)
            
+
     )
 
 # Replace with sentence case names
@@ -142,7 +143,7 @@ heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
                by = join_by("Rt" == "Average Rt(min)",
                             "Mz" == "Average Mz",
                             "AnalysisMode" == "AnalysisMode")) %>% 
-    mutate(Metabolite_nameUnique = paste0(Clean_name, "\n", 
+    mutate(Metabolite_nameUnique = paste0(Clean_name, " ", 
                                           Rt, "/", Mz)
     )
 
@@ -163,10 +164,11 @@ order_mets = (heatmap_data %>%
 
 color_limit = max(abs(heatmap_data$FoldChange)) %>%
     ceiling()
-
-color_scale = c(-color_limit, -color_limit/2,
-                0, color_limit/2, color_limit)
-
+color_scale = c(-color_limit, -color_limit/2, -FC_threshold,
+                0, FC_threshold, color_limit/2, color_limit)
+colors = rev(brewer.pal(7, "RdBu"))
+names(colors) = color_scale
+colors[c(-FC_threshold, "0", FC_threshold)] = "white"
 heatmap_data %>%
     mutate(ordered_mets = Metabolite_nameUnique %>%
                factor(levels = order_mets$labels[order_mets$order]),
@@ -177,7 +179,7 @@ heatmap_data %>%
     ) %>%
     ggplot(aes(y=ordered_mets, x = Contrast_ordered, fill = FoldChange)) +
     geom_tile() +
-    scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
+    scale_fill_gradientn(colors = colors, 
                          name = "Fold change",
                          limits = range(color_scale),
                          breaks = color_scale,
@@ -185,6 +187,11 @@ heatmap_data %>%
     labs(x = "", y="", fill="Fold Change") +
     theme_classic() +
     theme(legend.position = "bottom",
-          #axis.text.x = element_blank(),
+          axis.text.x = element_text(angle=45, hjust=1, vjust=1),
+          axis.text.y = element_text(size=7),
+          legend.key.height = unit(5, "mm"),
+          legend.key.width = unit(1, "cm"),
           #axis.ticks.x = element_blank()
           )
+ggsave("plots/Annotated_heatmap_allModes.pdf",
+       height=8, width=7, dpi=1200)
