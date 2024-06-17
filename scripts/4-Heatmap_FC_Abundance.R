@@ -38,7 +38,9 @@ og_diff_abundance <-
     mutate(Regulation = case_when(FoldChange < -FC_threshold ~ "Down-regulated",
                                   FoldChange > FC_threshold ~ "Up-regulated",
                                   .default = "None")) 
-
+write_delim(og_diff_abundance,
+            "Results/HeatmapData_longFormat.txt",
+            delim = "\t")
 subsets_diff_abundance <- 
     sapply(paste0("AC9.", 1:3), simplify = F, \(x) {
         og_diff_abundance %>%
