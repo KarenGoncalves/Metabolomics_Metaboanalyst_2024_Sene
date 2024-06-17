@@ -95,41 +95,41 @@ Annotation_DAAs$Clean_name[names_to_correct] <-
 #            plotContrast, FoldChange, pValue, padj) %>% 
 #     arrange(plotContrast, FoldChange) %>% View
 
-# #### Plot proportion of annotated DAAs ####
-# annotation_DAAs %>% 
-#     mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown",
-#                               "Yes", "No"),
-#                               levels = c("Yes", "No")
-#                               )
-#            ) %>% 
-#     group_by(Annotated, AnalysisMode) %>% 
-#     summarize(Analytes = length(`Metabolite name`)) %>% 
-#     group_by(AnalysisMode) %>%
-#     summarize(Analytes = Analytes,
-#               Annotated = Annotated,
-#               Total = sum(Analytes)) %>% 
-#     mutate(Proportion = Analytes / Total,
-#            Mode = 
-#                case_when(AnalysisMode == "HILIC_Positive" ~ "HILIC\nPositive",
-#                          AnalysisMode == "RP_Positive" ~ "Reversed phase\nPositive",
-#                          .default = "Reversed phase\nNegative")) %>%
-#     ggplot(aes(x = "", Proportion, fill=Annotated,
-#                label = Analytes)) + 
-#     geom_col() + 
-#     geom_text_repel(aes(color = Annotated),
-#                     show.legend = F) +
-#     facet_grid(~Mode, scales = "free_y") +
-#     coord_polar(theta = "y", start = 0) +
-#     scale_fill_manual(values = c("No" = "grey", "Yes" = "red")
-#                       ) + 
-#     scale_color_manual(values = c("No" = "grey30", "Yes" = "red")
-#     ) + 
-#     theme_void() +
-#     theme(legend.position = "bottom")
-# ggsave("plots/Proportion_annotated_DAAs.pdf",
-#        height=2.5, width=5, dpi=1200)
-# 
-# 
+#### Plot proportion of annotated DAAs ####
+annotation_DAAs %>%
+    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown",
+                              "Yes", "No"),
+                              levels = c("Yes", "No")
+                              )
+           ) %>%
+    group_by(Annotated, AnalysisMode) %>%
+    summarize(Analytes = length(`Metabolite name`)) %>%
+    group_by(AnalysisMode) %>%
+    summarize(Analytes = Analytes,
+              Annotated = Annotated,
+              Total = sum(Analytes)) %>%
+    mutate(Proportion = Analytes / Total,
+           Mode =
+               case_when(AnalysisMode == "HILIC_Positive" ~ "HILIC\nPositive",
+                         AnalysisMode == "RP_Positive" ~ "Reversed phase\nPositive",
+                         .default = "Reversed phase\nNegative")) %>%
+    ggplot(aes(x = "", Proportion, fill=Annotated,
+               label = Analytes)) +
+    geom_col() +
+    geom_text_repel(aes(color = Annotated),
+                    show.legend = F) +
+    facet_grid(~Mode, scales = "free_y") +
+    coord_polar(theta = "y", start = 0) +
+    scale_fill_manual(values = c("No" = "grey", "Yes" = "red")
+                      ) +
+    scale_color_manual(values = c("No" = "grey20", "Yes" = "red")
+    ) +
+    theme_void() +
+    theme(legend.position = "bottom")
+ggsave("plots/Proportion_annotated_DAAs.pdf",
+       height=2.5, width=5, dpi=1200)
+
+
 #### Heatmap of annotated analytes ####
 heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
     separate(col = Metabolite, 
