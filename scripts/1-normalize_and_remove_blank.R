@@ -19,7 +19,7 @@ for (fileNumber in 1:3) {
     )
     
     measures = apply(input[-1,-1], 2, \(x) {
-        as.numeric(x) + 1
+        as.numeric(x)
     }) %>%
         as.data.frame
     rownames(measures) = input[-1,1]
@@ -27,25 +27,29 @@ for (fileNumber in 1:3) {
     blank_value = apply(measures[, metadata$Groups == "BLANK"],
                         1, max)
     
+    clones = metadata[!metadata$Groups %in% c("BLANK", "QC"),]$Groups %>% unique
     greater_than_blank = 
-        apply(measures[, !metadata$Groups %in% c("BLANK", "QC")], 
+        apply(measures[, !metadata$Groups  == "BLANK"], 
               2, \(x) {
-                  x > blank_value*blank_threshold
+                  result = (x - blank_value*blank_threshold)
+                  ifelse(result < 0, 0,
+                         result)
               }) %>% data.frame(row.names = rownames(measures))
     
-    clones = metadata[!metadata$Groups %in% c("BLANK", "QC"),]$Groups %>% unique
     present_twoMore_reps = 
-        sapply(clones, \(x) {
+        sapply(c(clones, "QC"), \(x) {
             colsInterest = (metadata %>%
                                 filter(Groups == x))$Replicates
-            samples_GTB = greater_than_blank[, colsInterest] %>% rowSums() 
-            samples_GTB > 1
-        }) %>% as.data.frame
+            samples_GTB = greater_than_blank[, colsInterest] %>% 
+                apply(MARGIN=1, \(x) as.logical(x) %>% sum)
+            samples_GTB >= 2
+        }) %>% as.data.frame 
     
-    measures_greater_than_blank = input %>%
+    measures_greater_than_blank = greater_than_blank %>%
+        mutate(Sample = input$Sample[-1]) %>%
         select(Sample,
-               all_of(metadata$Replicates[metadata$Groups %in% clones])) %>%
-        as.data.frame(row.names = input$Sample)
+               all_of(metadata$Replicates[metadata$Groups != "BLANK"])) %>%
+        as.data.frame(row.names = input$Sample[-1])
     
     measurements = sapply(names(measures_greater_than_blank)[-1],
            simplify = T, \(colName) {
@@ -54,11 +58,12 @@ for (fileNumber in 1:3) {
             sapply(1:nrow(present_twoMore_reps), \(met) {
                 ifelse(
                     present_twoMore_reps[met, cloneName],
-                    measures_greater_than_blank[met+1, colName],
+                    measures_greater_than_blank[met, colName],
                     0)
             })
         }) %>% as.data.frame(row.names = input$Sample[-1])
-    measures = measures [!apply(measurements, 1, \(x) all(x == "0")),
+    
+    measures = measurements [!apply(measurements, 1, \(x) all(x == "0")),
                          metadata$Replicates[!metadata$Groups %in% c("BLANK")],]
     
     
