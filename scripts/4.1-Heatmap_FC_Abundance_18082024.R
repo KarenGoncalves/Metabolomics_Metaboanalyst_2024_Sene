@@ -114,5 +114,5 @@ zscore_plots <-
                                        'cm'))
 
 
-ggsave(plot = zscore_plots, "plots/Relative_abundance_DAAs.pdf", 
+ggsave(plot = zscore_plots, paste0("plots/Relative_abundance_DAAs_", Sys.Date(), ".pdf"), 
        height = 6, width = 8)
