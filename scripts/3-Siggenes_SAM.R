@@ -3,6 +3,7 @@ library(tidyverse)
 library(MetaboAnalystR)
 library(ggrepel)
 library(RColorBrewer)
+library(siggenes)
 theme_classic() %>% theme_set()
 
 Analysis_modes = c("HILIC_Positive",
