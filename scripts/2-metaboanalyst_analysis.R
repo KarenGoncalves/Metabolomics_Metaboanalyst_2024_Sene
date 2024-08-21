@@ -8,7 +8,7 @@ in_files = list.files(path = "Inputs/",
 tableContrast <- 
     data.frame(Numerator = c("AC9.1", "AC9.2", "AC9.3",
                              "AC9.1", "AC9.2", "AC9.1"),
-               Denominator = c("E30", "E30", "E30", 
+               Denominator = c("pPTGE30", "pPTGE30", "pPTGE30", 
                                "AC9.3", "AC9.3", "AC9.2"))
 
 for (i in 1:3) {
