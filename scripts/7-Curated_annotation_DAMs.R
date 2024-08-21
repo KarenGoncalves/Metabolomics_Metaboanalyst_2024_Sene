@@ -212,3 +212,11 @@ heatmap_data %>%
           )
 ggsave("plots/Annotated_heatmap_allModes.pdf",
        height=8, width=7, dpi=1200)
+
+heatmap_data %>%
+    unique %>% inner_join(Annotation_DAAs, by = "INCHIKEY") %>%
+    select(Metabolite_nameplot, INCHIKEY, `Metabolite name`) %>%
+    unique %>%
+    write_delim("Results/Metabolite_names_plots.txt",
+                delim="\t", append = F, quote="none")
+    
