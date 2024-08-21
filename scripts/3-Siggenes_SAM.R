@@ -14,8 +14,9 @@ plot_basename <- paste0("plots/", Analysis_modes, "/")
 tableContrast <- 
     data.frame(Numerator = c("AC9.1", "AC9.2", "AC9.3",
                              "AC9.1", "AC9.2", "AC9.1"),
-               Denominator = c("E30", "E30", "E30", 
+               Denominator = c("pPTGE30", "pPTGE30", "pPTGE30", 
                                "AC9.3", "AC9.3", "AC9.2"))
+clones = c("AC9.1", "AC9.2", "AC9.3", "pPTGE30")
 FDR_threshold = 0.05
 adjusted_FDR_threshold = 0.00833333233333
 FC_threshold = 2
@@ -29,20 +30,23 @@ for (i in 1:3) {
         width = 6, height = 6, onefile = T)
     rm("mSet")
     load(inFiles[i])
+    
     met_abundance[[i]] <- mSet$dataSet$norm 
     differential_abundance[[i]] <- list()
     
     for (j in 1:nrow(tableContrast)){
         print(tableContrast[j,])
-        numerator = tableContrast$Numerator[j]
-        denominator = tableContrast$Denominator[j]
-        contrastName = paste0(numerator, "_v_", denominator)
+        contrastName = paste0(tableContrast[j,1], "_v_", tableContrast[j,2])
         replicates = rownames(mSet$dataSet$norm)
-        mSet_subset_norm = met_abundance[[i]][c(grep(numerator, replicates),
-                                               grep(denominator, replicates)), ]
-        cls_subset = factor(rep(tableContrast[j,] %>% unlist, each = 3),
-                            levels = tableContrast[j,])
+        cls_subset = factor(rep(tableContrast[j,] %>% unlist, each = 3))
         
+        if (tableContrast[j,2] == "pPTGE30")  {
+            cls_subset <- relevel(cls_subset, "pPTGE30")
+            cls_subset <- sort(cls_subset)
+        }
+        mSet_subset_norm = 
+            met_abundance[[i]][c(grep(levels(cls_subset)[1], replicates),
+                                 grep(levels(cls_subset)[2], replicates)), ]
         SAM = siggenes::sam(t(mSet_subset_norm), 
                             cl = cls_subset, 
                             method = "d.stat", B=100, 
@@ -62,21 +66,21 @@ for (i in 1:3) {
             deltaValue = deltaValue[order(deltaValue[,"FDR"]), "Delta"]
         }
         sam.plot2(SAM, deltaValue, sig.col = c("blue", "red"), 
-                  main = paste0(numerator, " vs ", denominator)
+                  main = paste0(tableContrast[j,1], " vs ", tableContrast[j,2])
         )
         
         differential_abundance[[i]][[contrastName]] <- 
             data.frame(AnalysisMode = Analysis_modes[i],
                        Contrast = contrastName,
-                       plotContrast = paste0(numerator, " vs ", denominator),
+                       plotContrast = paste0(tableContrast[j,1], " vs ", tableContrast[j,2]),
                        Metabolite = names(SAM@d),
-                       Ratio_Change = SAM@fold,
-                       FoldChange = log2(SAM@fold),
+                       Ratio_Change = 1/SAM@fold,
+                       FoldChange = log2(1/SAM@fold),
                        pValue = SAM@p.value,
                        padj = SAM@q.value) 
                          
     }
-    differential_abundance[[i]] <- 
+    differential_abundance_all <- 
         differential_abundance[[i]] %>%
         list_rbind()
 dev.off()
@@ -85,4 +89,5 @@ dev.off()
 for (i in list.files(".", patter=".(qs|csv)")) {
     file.remove(i)
 }
+
 save(differential_abundance, file = "Results/Siggenes_DAAs.RData")
