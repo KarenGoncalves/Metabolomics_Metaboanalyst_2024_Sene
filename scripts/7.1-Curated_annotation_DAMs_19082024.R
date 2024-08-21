@@ -148,7 +148,9 @@ heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
                             "AnalysisMode" == "AnalysisMode")) %>% 
     mutate(Metabolite_nameUnique = paste0(Clean_name, " ", 
                                           Rt, "/", Mz)
-    ) %>% filter(grepl(empty_vector, Contrast))
+    ) %>% filter(grepl(empty_vector, Contrast))  %>% 
+    filter(Clean_name != "Unknown" &
+               !grepl("w/o MS2", Clean_name)) 
 
 putative_annotations <- 
     heatmap_data %>% select(Clean_name, INCHIKEY, Metabolite_nameUnique) %>%
@@ -204,12 +206,14 @@ heatmap_data %>%
                          labels = color_scale) +
     labs(x = "", y="", fill="Fold Change") +
     theme_classic() +
-    theme(legend.position = "bottom",
+    theme(
+        # legend.position = "bottom",
           axis.text.x = element_text(angle=45, hjust=1, vjust=1),
           axis.text.y = element_text(size=7),
-          legend.key.height = unit(5, "mm"),
-          legend.key.width = unit(1, "cm"),
-          #axis.ticks.x = element_blank()
+          # legend.key.height = unit(5, "mm"),
+          # legend.key.width = unit(1, "cm"),
+          # #axis.ticks.x = element_blank()
     )
+
 ggsave("plots/Annotated_heatmap_allModes_19082024.pdf",
        height=8, width=7, dpi=1200)

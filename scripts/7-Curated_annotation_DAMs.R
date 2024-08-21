@@ -80,9 +80,7 @@ Annotation_DAAs <- left_join(annotation_DAAs,
                     replacement="Cyclodepsipeptide", fixed=T) %>%
                gsub(pattern="7-hydroxy-3-(4-hydroxyphenyl)-8-((2S,3R,4R,5S,6R)-3,4,5-trihydroxy-6-(hydroxymethyl)tetrahydro-2H-pyran-2-yl)-4H-chromen-4-one",
                     replacement="Isoflavonoid C-glycoside [1]", fixed=T)
-           
-
-    )
+           )
 
 # Replace with sentence case names
 names_to_correct <- Annotation_DAAs$Clean_name %in% 
@@ -90,9 +88,9 @@ names_to_correct <- Annotation_DAAs$Clean_name %in%
 Annotation_DAAs$Clean_name[names_to_correct] <- 
     str_to_sentence(Annotation_DAAs$Clean_name[names_to_correct])
 
-# write_delim(Annotation_DAAs, 
-#             "Results/differentially_abundant_analytes_annotation.txt",
-#             delim = "\t", na = "NA")
+write_delim(Annotation_DAAs,
+            "Results/differentially_abundant_analytes_annotation.txt",
+            delim = "\t", na = "NA")
 # Annotation_DAAs %>% filter(`Metabolite name` != "Unknown") %>% 
 #     select(`Metabolite name`, Clean_name, AnalysisMode, 
 #            plotContrast, FoldChange, pValue, padj) %>% 
@@ -100,7 +98,8 @@ Annotation_DAAs$Clean_name[names_to_correct] <-
 
 #### Plot proportion of annotated DAAs ####
 annotation_DAAs %>%
-    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown",
+    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
+                                         !(grepl("w/o MS2", `Metabolite name`)),
                               "Yes", "No"),
                               levels = c("Yes", "No")
                               )
@@ -129,6 +128,7 @@ annotation_DAAs %>%
     ) +
     theme_void() +
     theme(legend.position = "bottom")
+
 ggsave("plots/Proportion_annotated_DAAs.pdf",
        height=2.5, width=5, dpi=1200)
 
@@ -148,32 +148,46 @@ heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
                             "AnalysisMode" == "AnalysisMode")) %>% 
     mutate(Metabolite_nameUnique = paste0(Clean_name, " ", 
                                           Rt, "/", Mz)
-    )
+    )  %>% 
+    filter(Clean_name != "Unknown" &
+               !grepl("w/o MS2", Clean_name)) 
+putative_annotations <- 
+    heatmap_data %>% select(Clean_name, INCHIKEY, Metabolite_nameUnique) %>%
+    unique %>% group_by(Clean_name) %>% 
+    summarize(uniqueName = Metabolite_nameUnique,
+              n = length(Metabolite_nameUnique)) %>%
+    mutate(namePlot = 
+               ifelse(n > 1, 
+                      paste0("Putative: ", uniqueName),
+                      uniqueName))
 
-
-heatmap_data %>% dplyr::filter(Clean_name != "Unknown") %>% 
-    dplyr::select(INCHIKEY, Clean_name) %>% 
-    unique() %>%
-    View()
+heatmap_data$Metabolite_nameplot <- 
+    sapply(heatmap_data$Metabolite_nameUnique,
+           \(x) {
+               putative_annotations$namePlot[
+                   putative_annotations$uniqueName == x
+               ]
+           })
 
 order_mets = (heatmap_data %>%
-                   dplyr::select(Contrast, FoldChange, Metabolite_nameUnique) %>%
+                   dplyr::select(Contrast, FoldChange, Metabolite_nameplot) %>%
                   unique() %>%
                    pivot_wider(names_from = Contrast, 
                                values_from = FoldChange,
                                values_fill=0) %>%
-                   data.frame(row.names = .$Metabolite_nameUnique))[-1] %>%
+                   data.frame(row.names = .$Metabolite_nameplot))[-1] %>%
                   as.matrix() %>% dist() %>% hclust
 
 color_limit = max(abs(heatmap_data$FoldChange)) %>%
     ceiling()
-color_scale = c(-color_limit, -color_limit/2, -FC_threshold,
-                0, FC_threshold, color_limit/2, color_limit)
-colors = rev(brewer.pal(7, "RdBu"))
+color_scale = c(-color_limit, -color_limit/2, #-FC_threshold,
+                0, #FC_threshold, 
+                color_limit/2, color_limit)
+colors = rev(brewer.pal(5, "RdBu"))
 names(colors) = color_scale
-colors[c(-FC_threshold, "0", FC_threshold)] = "white"
+colors[c("0")] = "white"
 heatmap_data %>%
-    mutate(ordered_mets = Metabolite_nameUnique %>%
+    mutate(ordered_mets = Metabolite_nameplot %>%
                factor(levels = order_mets$labels[order_mets$order]),
            Contrast_ordered = plotContrast %>%
                factor(levels = sapply(1:6, \(x) paste(tableContrast$Numerator[x], "vs",
