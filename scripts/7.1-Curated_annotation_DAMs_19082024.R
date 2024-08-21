@@ -47,6 +47,7 @@ Annotation_DAAs <- left_join(annotation_DAAs,
                              by = join_by("Average Rt(min)" == "Rt",
                                           "Average Mz" == "Mz",
                                           "AnalysisMode" == "AnalysisMode")) %>%
+    
     mutate(Clean_name = gsub("; (LC-|CE\\d).+$", "",
                              `Metabolite name`) %>%
                gsub(pattern="\\(*[Nn]ot validated.*",
@@ -69,18 +70,17 @@ Annotation_DAAs <- left_join(annotation_DAAs,
                gsub(pattern="N-((octahydro-1H-quinolizin-1-yl)methyl)-2,4,5,6-tetrahydrocyclopenta[c]pyrazole-3-carboxamide",
                     replacement="Quinolizine", fixed=T) %>%
                gsub(pattern="2-(3,4-dimethoxyphenyl)-7-methoxy-4H-chromen-4-one",
-                    replacement="7-O-methylated flavonoid", fixed=T) %>%
+                    replacement="7-O-methylated flavonoid [1]", fixed=T) %>%
                gsub(pattern="(R)-((2R,3S,4S,5R,6S)-6-((3-(2,3-dihydrobenzo[b][1,4]dioxin-6-yl)-4-oxo-4H-chromen-7-yl)oxy)-3,4,5-trihydroxytetrahydro-2H-pyran-2-yl)methyl 2-((tert-butoxycarbonyl)amino)-3-phenylpropanoate",
                     replacement="Isoflavonoid O-glycoside [1]", fixed=T) %>%
                gsub(pattern="methyl 2-((4-methyl-2-oxo-2H-chromen-7-yl)oxy)propanoate",
-                    replacement="Coumarin derivative", fixed=T) %>%
+                    replacement="Coumarin derivative [1]", fixed=T) %>%
                gsub(pattern="4-((1R,3S,5r,7r)-5,7-dimethyl-1,3-diazaadamantan-2-yl)-2-methoxyphenol",
-                    replacement="Methoxyphenol-type compound", fixed=T) %>%
+                    replacement="Methoxyphenol-type compound [1]", fixed=T) %>%
                gsub(pattern="7-benzyl-11,14-dimethyl-16-(2-methylpropyl)-10,13-di(propan-2-yl)-17-oxa-1,5,8,11,14-pentazabicyclo[17.3.0]docosane-2,6,9,12,15,18-hexone",
-                    replacement="cyclodepsipeptide", fixed=T) %>%
+                    replacement="Cyclodepsipeptide", fixed=T) %>%
                gsub(pattern="7-hydroxy-3-(4-hydroxyphenyl)-8-((2S,3R,4R,5S,6R)-3,4,5-trihydroxy-6-(hydroxymethyl)tetrahydro-2H-pyran-2-yl)-4H-chromen-4-one",
-                    replacement="Isoflavonoid C-glycoside [1]", fixed=T)
-           
+                    replacement="Isoflavonoid C-glycoside [1]", fixed=T)           
            
     )
 
