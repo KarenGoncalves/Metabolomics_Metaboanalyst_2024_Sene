@@ -63,8 +63,11 @@ for (fileNumber in 1:3) {
             })
         }) %>% as.data.frame(row.names = input$Sample[-1])
     
-    measures = measurements [!apply(measurements, 1, \(x) all(x == "0")),
-                         metadata$Replicates[!metadata$Groups %in% c("BLANK")],]
+    measures = 
+        measurements[
+            !apply(measurements[,metadata$Replicates[metadata$Groups %in% clones]],
+                   1, \(x) all(x == "0")),
+            metadata$Replicates[!metadata$Groups %in% c("BLANK")],]
     
     
     cbind(Sample = c("Label", rownames(measures)), 
