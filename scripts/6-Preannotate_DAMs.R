@@ -19,7 +19,7 @@ annotation <- sapply(Analysis_modes, simplify = F, \(x) {
 
 #### Keep only significantly DAAs ####
 differential_abundance_sig <- 
-    differential_abundance %>%
+    differential_abundance_all %>%
     list_rbind %>% filter(!is.na(pValue),
                           pValue < FDR_threshold,
                           abs(FoldChange) > FC_threshold

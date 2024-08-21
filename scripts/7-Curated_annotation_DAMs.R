@@ -9,44 +9,25 @@ Analysis_modes = c("HILIC_Positive",
 FDR_threshold = 0.05
 FC_threshold = 1
 
+kept_mets <- sapply(Analysis_modes, simplify = F, \(x){
+    mSetData=paste0("Results/", x, "_mSet.RData")
+    load(mSetData)
+    data.frame(MetID = mSet[["dataSet"]][["filt"]] %>% colnames,
+               Analysis_mode = x
+    )
+}) %>% list_rbind() %>%
+    separate(MetID, 
+             into = c("Rt", "Mz"),
+             sep = "/",
+             convert = T)
+
 #### Load data ####
 load("Results/Siggenes_DAAs.RData")
 annotation <- sapply(Analysis_modes, simplify = F, \(x) {
     paste0("Inputs/Corrected_LCMSMS_", x, "_identification.txt") %>%
         read_delim(delim = "\t", na = "null") %>%
         mutate(AnalysisMode = x)
-}) %>% list_rbind() 
-
-#### Keep only significantly DAAs ####
-differential_abundance_sig <- 
-    differential_abundance %>%
-    list_rbind %>% filter(!is.na(pValue),
-                          pValue < FDR_threshold,
-                          abs(FoldChange) > FC_threshold
-    ) %>%
-    separate(col = Metabolite, 
-             into = c("Rt", "Mz"), 
-             sep = "/",  convert = T)
-
-DAM_ids <- differential_abundance_sig %>%
-    select(Rt, Mz, AnalysisMode) %>%
-    unique
-tableContrast = unique(differential_abundance_sig %>%
-                           select(Contrast)) %>%
-    separate(col = Contrast,
-             into = c("Numerator", "Denominator"), sep = "_v_")
-
-#### Get info on DAAs ####
-annotation_DAAs <- 
-    inner_join(annotation, DAM_ids,
-               by = join_by("Average Rt(min)" == "Rt",
-                            "Average Mz" == "Mz",
-                            "AnalysisMode" == "AnalysisMode"))
-Annotation_DAAs <- left_join(annotation_DAAs,
-          differential_abundance_sig,
-          by = join_by("Average Rt(min)" == "Rt",
-                       "Average Mz" == "Mz",
-                       "AnalysisMode" == "AnalysisMode")) %>%
+}) %>% list_rbind() %>%
     mutate(Clean_name = gsub("; (LC-|CE\\d).+$", "",
                              `Metabolite name`) %>%
                gsub(pattern="\\(*[Nn]ot validated.*",
@@ -80,13 +61,44 @@ Annotation_DAAs <- left_join(annotation_DAAs,
                     replacement="Cyclodepsipeptide", fixed=T) %>%
                gsub(pattern="7-hydroxy-3-(4-hydroxyphenyl)-8-((2S,3R,4R,5S,6R)-3,4,5-trihydroxy-6-(hydroxymethyl)tetrahydro-2H-pyran-2-yl)-4H-chromen-4-one",
                     replacement="Isoflavonoid C-glycoside [1]", fixed=T)
-           )
+    )
+
+write_delim(annotation,
+            "Results/Annotation_clean_names.txt",
+            delim = "\t", na = "NA")
 
 # Replace with sentence case names
-names_to_correct <- Annotation_DAAs$Clean_name %in% 
-    c("THIAMINE", "ABIETIC ACID", "THIAMINE PYROPHOSPHATE")
-Annotation_DAAs$Clean_name[names_to_correct] <- 
-    str_to_sentence(Annotation_DAAs$Clean_name[names_to_correct])
+names_to_correct <- annotation$Clean_name %in% 
+    c("THIAMINE", "ABIETIC ACID", "THIAMINE PYROPHOSPHATE", "lappaconitine")
+annotation$Clean_name[names_to_correct] <- 
+    str_to_sentence(annotation$Clean_name[names_to_correct])
+
+
+#### Keep only significantly DAAs ####
+differential_abundance_sig <- 
+    differential_abundance_all %>%
+    list_rbind %>% filter(!is.na(pValue),
+                          pValue < FDR_threshold,
+                          abs(FoldChange) > FC_threshold
+    ) %>%
+    separate(col = Metabolite, 
+             into = c("Rt", "Mz"), 
+             sep = "/",  convert = T)
+
+DAM_ids <- differential_abundance_sig %>%
+    select(Rt, Mz, AnalysisMode) %>%
+    unique
+tableContrast = unique(differential_abundance_sig %>%
+                           select(Contrast)) %>%
+    separate(col = Contrast,
+             into = c("Numerator", "Denominator"), sep = "_v_")
+
+#### Get info on DAAs ####
+Annotation_DAAs <- left_join(annotation,
+          differential_abundance_sig,
+          by = join_by("Average Rt(min)" == "Rt",
+                       "Average Mz" == "Mz",
+                       "AnalysisMode" == "AnalysisMode")) 
 
 write_delim(Annotation_DAAs,
             "Results/differentially_abundant_analytes_annotation.txt",
@@ -97,7 +109,11 @@ write_delim(Annotation_DAAs,
 #     arrange(plotContrast, FoldChange) %>% View
 
 #### Plot proportion of annotated DAAs ####
-annotation_DAAs %>%
+annotation %>%
+    inner_join(kept_mets,
+               by = join_by("Average Rt(min)" == "Rt",
+                            "Average Mz" == "Mz",
+                            "AnalysisMode" == "Analysis_mode")) %>%
     mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
                                          !(grepl("w/o MS2", `Metabolite name`)),
                               "Yes", "No"),
@@ -214,8 +230,15 @@ ggsave("plots/Annotated_heatmap_allModes.pdf",
        height=8, width=7, dpi=1200)
 
 heatmap_data %>%
-    unique %>% inner_join(Annotation_DAAs, by = "INCHIKEY") %>%
-    select(Metabolite_nameplot, INCHIKEY, `Metabolite name`) %>%
+    unique %>% 
+    inner_join(Annotation_DAAs, 
+               by = c("INCHIKEY", "Clean_name", 
+                      "plotContrast", "FoldChange", 
+                      "padj", "AnalysisMode", "Contrast",
+                      "pValue")
+               ) %>%
+    select(Metabolite_nameplot, INCHIKEY, Clean_name) %>%
+    filter(!grepl("w/o MS2", Clean_name)) %>%
     unique %>%
     write_delim("Results/Metabolite_names_plots.txt",
                 delim="\t", append = F, quote="none")
