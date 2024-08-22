@@ -21,7 +21,7 @@ adjusted_FDR_threshold = 0.00833333233333
 FC_threshold = 2
 
 met_abundance <- list()
-differential_abundance <- list()
+differential_abundance_all <- list()
 
 for (i in 1:3) {
     pdf(file = paste0(plot_basename[i], 
@@ -30,7 +30,7 @@ for (i in 1:3) {
     rm("mSet")
     load(inFiles[i])
     met_abundance[[i]] <- mSet$dataSet$norm 
-    differential_abundance[[i]] <- list()
+    differential_abundance <- list()
     
     for (j in 1:nrow(tableContrast)){
         print(tableContrast[j,])
@@ -61,23 +61,23 @@ for (i in 1:3) {
         } else {
             deltaValue = deltaValue[order(deltaValue[,"FDR"]), "Delta"]
         }
-        sam.plot2(SAM, deltaValue, sig.col = c("blue", "red"), 
-                  main = paste0(numerator, " vs ", denominator)
-        )
+        # sam.plot2(SAM, deltaValue, sig.col = c("blue", "red"), 
+        #           main = paste0(numerator, " vs ", denominator)
+        # )
         
-        differential_abundance[[i]][[contrastName]] <- 
+        differential_abundance[[contrastName]] <- 
             data.frame(AnalysisMode = Analysis_modes[i],
                        Contrast = contrastName,
                        plotContrast = paste0(numerator, " vs ", denominator),
                        Metabolite = names(SAM@d),
-                       Ratio_Change = SAM@fold,
-                       FoldChange = log2(SAM@fold),
+                       Ratio_Change = 1/SAM@fold,
+                       FoldChange = log2(1/SAM@fold),
                        pValue = SAM@p.value,
                        padj = SAM@q.value) 
                          
     }
-    differential_abundance[[i]] <- 
-        differential_abundance[[i]] %>%
+    differential_abundance_all <- 
+        differential_abundance %>%
         list_rbind()
 dev.off()
 }
@@ -85,4 +85,4 @@ dev.off()
 for (i in list.files(".", patter=".(qs|csv)")) {
     file.remove(i)
 }
-save(differential_abundance, file = "Results/Siggenes_DAAs.RData")
+save(differential_abundance_all, file = "Results/Siggenes_DAAs.RData")
