@@ -14,7 +14,7 @@ plot_basename <- paste0("plots/", Analysis_modes, "/")
 tableContrast <- 
     data.frame(Numerator = c("AC9.1", "AC9.2", "AC9.3",
                              "AC9.1", "AC9.2", "AC9.1"),
-               Denominator = c("E30", "E30", "E30", 
+               Denominator = c("pPTGE30", "pPTGE30", "pPTGE30", 
                                "AC9.3", "AC9.3", "AC9.2"))
 FDR_threshold = 0.05
 adjusted_FDR_threshold = 0.00833333233333

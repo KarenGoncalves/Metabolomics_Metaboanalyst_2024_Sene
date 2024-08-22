@@ -16,22 +16,16 @@ plot_basename <- paste0("plots/", Analysis_modes, "/")
 tableContrast <- 
     data.frame(Numerator = c("AC9.1", "AC9.2", "AC9.3",
                              "AC9.1", "AC9.2", "AC9.1"),
-               Denominator = c("E30", "E30", "E30", 
+               Denominator = c("pPTGE30", "pPTGE30", "pPTGE30", 
                                "AC9.3", "AC9.3", "AC9.2"))
 FDR_threshold = 0.05
 FC_threshold = 1
-# FoldChanges <- read_delim(paste0("Results/FC_ANOVA_allmodes.txt")) %>%
-#     dplyr::select(Metabolite,
-#                   Clone1, Clone2,
-#                   log2FC, plotContrast,
-#                   AnalysisMode)
-load("Results/Siggenes_DAAs.RData")
+
 
 #### Plot differential abundance ####
 
 og_diff_abundance <- 
-    differential_abundance %>%
-    list_rbind() %>%
+    read_delim("Results/Siggenes.txt", delim="\t") %>%
     filter(pValue < FDR_threshold,
            abs(FoldChange) > FC_threshold
     ) %>% 
@@ -39,12 +33,43 @@ og_diff_abundance <-
                                   FoldChange > FC_threshold ~ "Up-regulated",
                                   .default = "None")) 
 
-subsets_diff_abundance <- 
-    sapply(paste0("AC9.", 1:3), simplify = F, \(x) {
-        og_diff_abundance %>%
-            filter(!grepl(x, plotContrast))
-    })
 
+order_mets = ((og_diff_abundance %>%
+                   dplyr::select(Contrast,FoldChange, Metabolite) %>%
+                   pivot_wider(names_from = Contrast, values_from = FoldChange,
+                               values_fill = 0) %>%
+                   data.frame(row.names = .$Metabolite))[-1] %>%
+                  as.matrix() %>% dist() %>% hclust)
+
+color_limit = max(abs(og_diff_abundance$FoldChange)) %>%
+    ceiling()
+
+color_scale = c(-color_limit, -color_limit/2,
+                0, color_limit/2, color_limit)
+og_diff_abundance %>%
+    mutate(ordered_mets = Metabolite %>%
+               factor(levels = order_mets$labels[order_mets$order]),
+           Contrast_ordered = plotContrast %>%
+               factor(levels = sapply(1:6, \(x) paste(tableContrast$Numerator[x], "vs",
+                                                      tableContrast$Denominator[x]))
+               )
+    ) %>%
+    ggplot(aes(ordered_mets, y = Contrast_ordered, fill = FoldChange)) +
+    geom_tile() +
+    scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
+                         name = "Fold change",
+                         limits = range(color_scale),
+                         breaks = color_scale,
+                         labels = color_scale) +
+    labs(x = "", y="", fill="Fold Change") +
+    theme_classic() +
+    theme(legend.position = "bottom",
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+
+ggsave("plots/Siggenes_FC.pdf", dpi=1200,
+    width=8, height=6)
+        
 
 #### Plot peak normalized peak height ####
 DAMs_abundance <- sapply(mets_abundance %>% names(), 
