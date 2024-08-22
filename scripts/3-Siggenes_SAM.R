@@ -76,13 +76,13 @@ for (i in 1:3) {
                        padj = SAM@q.value) 
                          
     }
-    differential_abundance_all <- 
-        differential_abundance %>%
-        list_rbind()
+     
+    differential_abundance %>%
+        list_rbind() %>%
+        write_delim(file="Results/Siggenes.txt", delim="\t")
 dev.off()
 }
 
 for (i in list.files(".", patter=".(qs|csv)")) {
     file.remove(i)
 }
-save(differential_abundance_all, file = "Results/Siggenes_DAAs.RData")
