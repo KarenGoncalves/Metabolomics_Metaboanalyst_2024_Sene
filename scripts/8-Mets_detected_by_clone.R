@@ -9,18 +9,22 @@ inFiles <- paste0("Inputs/CleanUp_LCMSMS_", Analysis_modes, "_rawHeight.txt")
 outFiles <- paste0("Results/Analytes_detected_by_clone_", Analysis_modes, ".txt")
 
 for (i in 1:length(Analysis_modes)) {
-    file = inFiles[i]
-    output = out_files[i]
+    my_input = inFiles[i]
+    my_output = out_files[i]
+    load(paste0('Results/', Analysis_modes[i], '_mSet.RData'))
+    kept_metabolites <- mSet$dataSet$filt %>% colnames
     
-    
-    input = read_delim(file)
+    input = read_delim(file) 
     metadata = data.frame(Clone = input[1, -1] %>% unlist %>% unname ,
                           Replicate = names(input)[-1]) %>%
         filter(Clone != "QC")
-    input_logical = as.data.frame(input[-1,],
-                                  row.names = input[-1,1] %>% c)[-1] %>%
+    
+    input <- input %>%
+        filter(Sample %in% kept_metabolites)
+    input_logical = as.data.frame(input,
+                                  row.names = input[,1] %>% c)[-1] %>%
         apply(MARGIN=2, \(x) as.numeric(x) %>% as.logical )
-    rownames(input_logical) = input$Sample[-1]
+    rownames(input_logical) = input$Sample
     
     groups = unique(metadata$Clone)
     

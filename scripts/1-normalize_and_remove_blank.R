@@ -71,10 +71,13 @@ for (fileNumber in 1:3) {
                          metadata$Replicates[!metadata$Groups %in% c("BLANK")],]
     
     
-    cbind(Sample = c("Label", rownames(measures)), 
+    final <- cbind(Sample = c("Label", rownames(measures)), 
           rbind((data.frame(metadata$Groups[metadata$Groups !="BLANK"], 
                      row.names = metadata$Replicates[metadata$Groups !="BLANK"]) %>% 
               unname %>% t), measures)
-    ) %>% as_tibble %>%
-        write_delim(file = out_files[fileNumber], delim = "\t", append = F)
+    ) %>% as_tibble 
+    
+    final %>% print
+    write_delim(final,
+                file = out_files[fileNumber], delim = "\t", append = F)
 }

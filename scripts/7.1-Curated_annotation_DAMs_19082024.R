@@ -11,19 +11,28 @@ FC_threshold = 1
 empty_vector = "E30"
 
 #### Load data ####
-load("Results/Siggenes_DAAs.RData")
+kept_metabolites <-  sapply(Analysis_modes, simplify = F, \(x) {
+    load(paste0('Results/', x, '_mSet.RData'))
+    data.frame(Metabolite = mSet$dataSet$filt %>% colnames,
+               AnalysisMode = x)
+}) %>% list_rbind()
+
 annotation <- sapply(Analysis_modes, simplify = F, \(x) {
     paste0("Inputs/Corrected_LCMSMS_", x, "_identification.txt") %>%
         read_delim(delim = "\t", na = "null") %>%
         mutate(AnalysisMode = x)
-}) %>% list_rbind() 
+}) %>% list_rbind() %>%
+    filter(paste0(`Average Rt(min)`, "/", `Average Mz`) %in%
+               kept_metabolites$Metabolite)
+
+
 
 #### Keep only significantly DAAs ####
 differential_abundance_sig <- 
-    differential_abundance %>%
-    list_rbind %>% filter(!is.na(pValue),
-                          pValue < FDR_threshold,
-                          abs(FoldChange) > FC_threshold
+    read_delim("Results/Siggenes.txt") %>%
+    filter(!is.na(pValue), 
+           pValue < FDR_threshold,
+           abs(FoldChange) > FC_threshold
     ) %>% filter(grepl(empty_vector, Contrast)) %>%
     separate(col = Metabolite, 
              into = c("Rt", "Mz"), 
@@ -37,12 +46,12 @@ tableContrast = unique(differential_abundance_sig %>%
     separate(col = Contrast,
              into = c("Numerator", "Denominator"), sep = "_v_")
 #### Get info on DAAs ####
-Annotation_DAAs <- left_join(annotation,
-                             differential_abundance_sig,
-                             by = join_by("Average Rt(min)" == "Rt",
-                                          "Average Mz" == "Mz",
-                                          "AnalysisMode" == "AnalysisMode")) %>%
-    
+Annotation_DAAs <- 
+    left_join(annotation,
+              differential_abundance_sig,
+              by = join_by("Average Rt(min)" == "Rt",
+                           "Average Mz" == "Mz",
+                           "AnalysisMode" == "AnalysisMode")) %>%
     mutate(Clean_name = gsub("; (LC-|CE\\d).+$", "",
                              `Metabolite name`) %>%
                gsub(pattern="\\(*[Nn]ot validated.*",
@@ -100,8 +109,7 @@ Annotation_DAAs %>%
                                          !grepl("w/o MS2", `Metabolite name`),
                                      "Yes", "No"),
                               levels = c("Yes", "No")
-    )
-    ) %>%
+    )) %>%
     group_by(Annotated, AnalysisMode) %>%
     summarize(Analytes = length(`Metabolite name`)) %>%
     group_by(AnalysisMode) %>%

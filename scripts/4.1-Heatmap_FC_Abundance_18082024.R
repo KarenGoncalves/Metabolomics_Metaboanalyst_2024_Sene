@@ -33,6 +33,9 @@ og_diff_abundance <-
                                   FoldChange > FC_threshold ~ "Up-regulated",
                                   .default = "None")) 
 
+write_delim(og_diff_abundance,
+            "Results/HeatmapData_longFormat.txt",
+            delim = "\t")
 
 order_mets = ((og_diff_abundance %>%
                    dplyr::select(Contrast,FoldChange, Metabolite) %>%
