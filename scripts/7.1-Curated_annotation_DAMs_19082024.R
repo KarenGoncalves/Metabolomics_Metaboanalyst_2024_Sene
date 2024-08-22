@@ -214,3 +214,5 @@ heatmap_data %>%
 
 ggsave("plots/Annotated_heatmap_allModes_22082024.pdf",
        height=8, width=7, dpi=1200)
+ggsave("plots/Annotated_heatmap_allModes_22082024.svg",
+       height=8, width=7, dpi=1200)
