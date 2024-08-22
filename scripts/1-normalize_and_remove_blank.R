@@ -14,6 +14,10 @@ for (fileNumber in 1:3) {
     
     print(head(n=2, input))
     input[1,grepl("BLANK", input[1,])] = "BLANK"
+    input[1,grepl("E30", input[1,])] = gsub("E30", "pPTGE30", 
+                                            input[1,grepl("E30", input[1,])])
+    names(input) = gsub("E30", "pPTGE30", names(input))
+    
     metadata = data.frame(Replicates = names(input)[-1],
                           Groups = input[1,-1] %>% as.character
     )
