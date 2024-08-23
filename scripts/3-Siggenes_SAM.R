@@ -65,10 +65,6 @@ for (i in 1:3) {
         } else {
             deltaValue = deltaValue[order(deltaValue[,"FDR"]), "Delta"]
         }
-        sam.plot2(SAM, deltaValue, sig.col = c("blue", "red"), 
-                  main = paste0(tableContrast[j,1], " vs ", tableContrast[j,2])
-        )
-        
         differential_abundance[[contrastName]] <- 
             data.frame(AnalysisMode = AM,
                        Contrast = contrastName,
@@ -82,12 +78,14 @@ for (i in 1:3) {
     }
     differential_abundance_all[[AM]] <- 
         differential_abundance %>%
-        list_rbind()
+        list_rbind() 
+
 dev.off()
 }
+differential_abundance_all %>%
+    list_rbind() %>%
+    write_delim(file="Results/Siggenes.txt", delim="\t")
 
 for (i in list.files(".", patter=".(qs|csv)")) {
     file.remove(i)
 }
-
-save(differential_abundance_all, file = "Results/Siggenes_DAAs.RData")

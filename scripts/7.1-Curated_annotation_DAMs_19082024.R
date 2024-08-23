@@ -11,6 +11,18 @@ FC_threshold = 1
 empty_vector =  "pPTGE30"
 
 #### Load data ####
+kept_mets <- sapply(Analysis_modes, simplify = F, \(x){
+    mSetData=paste0("Results/", x, "_mSet.RData")
+    load(mSetData)
+    data.frame(MetID = mSet[["dataSet"]][["filt"]] %>% colnames,
+               Analysis_mode = x
+    )
+}) %>% list_rbind() %>%
+    separate(MetID, 
+             into = c("Rt", "Mz"),
+             sep = "/",
+             convert = T)
+
 load("Results/Siggenes_DAAs.RData")
 annotation <- sapply(Analysis_modes, simplify = F, \(x) {
     paste0("Inputs/Corrected_LCMSMS_", x, "_identification.txt") %>%
@@ -86,14 +98,54 @@ names_to_correct <- Annotation_DAAs$Clean_name %in%
 Annotation_DAAs$Clean_name[names_to_correct] <- 
     str_to_sentence(Annotation_DAAs$Clean_name[names_to_correct])
 
-# write_delim(Annotation_DAAs, 
-#             "Results/differentially_abundant_analytes_annotation.txt",
-#             delim = "\t", na = "NA")
+write_delim(Annotation_DAAs,
+            "Results/differentially_abundant_analytes_annotation.txt",
+            delim = "\t", na = "NA")
 # Annotation_DAAs %>% filter(`Metabolite name` != "Unknown") %>% 
 #     select(`Metabolite name`, Clean_name, AnalysisMode, 
 #            plotContrast, FoldChange, pValue, padj) %>% 
 #     arrange(plotContrast, FoldChange) %>% View
 
+annotation %>%
+    inner_join(kept_mets,
+               by = join_by("Average Rt(min)" == "Rt",
+                            "Average Mz" == "Mz",
+                            "AnalysisMode" == "Analysis_mode")) %>%
+    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
+                                         !(grepl("w/o MS2", `Metabolite name`)),
+                                     "Yes", "No"),
+                              levels = c("Yes", "No")
+    )
+    ) %>%
+    group_by(Annotated, AnalysisMode) %>%
+    summarize(Analytes = length(`Metabolite name`)) %>%
+    group_by(AnalysisMode) %>%
+    summarize(Analytes = Analytes,
+              Annotated = Annotated,
+              Total = sum(Analytes)) %>%
+    mutate(Proportion = Analytes / Total,
+           Mode =
+               case_when(AnalysisMode == "HILIC_Positive" ~ "HILIC\nPositive",
+                         AnalysisMode == "RP_Positive" ~ "Reversed phase\nPositive",
+                         .default = "Reversed phase\nNegative")) %>%
+    ggplot(aes(x = "", Proportion, fill=Annotated,
+               label = Analytes)) +
+    geom_col() +
+    geom_text_repel(aes(color = Annotated),
+                    show.legend = F) +
+    facet_grid(~Mode, scales = "free_y") +
+    coord_polar(theta = "y", start = 0) +
+    scale_fill_manual(values = c("No" = "grey", "Yes" = "red")
+    ) +
+    scale_color_manual(values = c("No" = "grey20", "Yes" = "red")
+    ) +
+    theme_void() +
+    theme(legend.position = "bottom")
+
+ggsave("plots/Proportion_annotated_DAAs.pdf",
+       height=2.5, width=5, dpi=1200)
+ggsave("plots/Proportion_annotated_DAAs.svg",
+       height=2.5, width=5, dpi=1200)
 
 #### Heatmap of annotated analytes ####
 heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
@@ -178,4 +230,6 @@ heatmap_data %>%
     )
 
 ggsave("plots/Annotated_heatmap_allModes_19082024.pdf",
+       height=8, width=7, dpi=1200)
+ggsave("plots/Annotated_heatmap_allModes_19082024.svg",
        height=8, width=7, dpi=1200)

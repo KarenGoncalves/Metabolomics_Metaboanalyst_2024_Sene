@@ -3,7 +3,7 @@ library(tidyverse)
 library(MetaboAnalystR)
 library(venn)
 
-clones <- c(paste0("AC9.", 1:3), "E30")
+clones <- c(paste0("AC9.", 1:3), "pPTGE30")
 Analysis_modes = c("HILIC_Positive",
                    "RP_Positive",
                    "RP_Negative")
@@ -20,6 +20,8 @@ analytes_detected <- sapply(1:length(Analysis_modes), simplify = F, \(i) {
         mSet[["dataSet"]][["filt"]] %>% colnames
     
     input = read_delim(file)
+    names(input) <- gsub("^E30", "pPTGE30", names(input))
+    input[1, -1] <- data.frame(gsub("^E30", "pPTGE30", input[1, -1])) %>% t
     metadata = data.frame(Clone = input[1, -1] %>% unlist %>% unname ,
                           Replicate = names(input)[-1]) %>%
         filter(Clone != "QC")
@@ -55,7 +57,7 @@ par(cex=1, font=1);
 venn_detected <- analytes_detected %>%
     select(all_of(clones))
 
-pdf('plots/Venn_filteredMetaboanalyst_detected.pdf',
+svg('plots/Venn_filteredMetaboanalyst_detected.svg',
     width=8, height=8, pointsize = 30)
 venn(venn_detected, 
      ilabels = "counts", 
@@ -69,7 +71,7 @@ venn_annotated_detected <-
     select(all_of(clones))
 
 
-pdf('plots/Venn_filteredMetaboanalyst_annotatedDetected.pdf',
+svg('plots/Venn_filteredMetaboanalyst_annotatedDetected.svg',
     width=8, height=8, pointsize = 30)
 venn(venn_annotated_detected, 
      ilabels = "counts", 
@@ -78,8 +80,9 @@ venn(venn_annotated_detected,
      par = T)
 dev.off()
 
+
 annotated_detected %>% 
-    filter(!E30) %>% 
+    filter(!pPTGE30) %>% 
     select(Clean_name, INCHIKEY, all_of(clones)) %>%
     write_delim(file = "Results/Annotated_notInE30.txt",
                 delim="\t")

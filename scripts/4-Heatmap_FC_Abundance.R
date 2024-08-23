@@ -78,7 +78,8 @@ og_diff_abundance %>%
 ggsave("plots/Siggenes_FC.pdf", 
     width=8, height=6)
 
-
+ggsave("plots/Siggenes_FC.svg", 
+       width=8, height=6)
 #### Plot peak normalized peak height ####
 DAMs_abundance <- sapply(mets_abundance %>% names(), 
                          simplify = F, \(x) {
@@ -184,4 +185,6 @@ ggarrange(plotlist = zscore_plots,
 
 
 ggsave("plots/Relative_abundance_DAAs.pdf", 
+       height = 6, width = 8)
+ggsave("plots/Relative_abundance_DAAs.svg", 
        height = 6, width = 8)
