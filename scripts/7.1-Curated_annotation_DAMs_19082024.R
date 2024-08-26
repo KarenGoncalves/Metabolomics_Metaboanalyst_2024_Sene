@@ -67,6 +67,7 @@ Annotation_DAAs <- left_join(annotation,
                     replacement="\\1") %>%
                gsub(pattern="andrographolide",
                     replacement="Andrographolide", fixed=T) %>%
+               gsub(pattern="lappaconitine", replacement="Lappaconitine") %>%
                gsub(pattern="(2R,3S,4S,5R,6R)-6-(((4S,5aS,7S,11aR,12aS)-4,7-dihydroxy-3-((2R,5S)-5-(2-hydroxypropan-2-yl)-2-methyltetrahydrofuran-2-yl)-2a,5a,8,8-tetramethylhexadecahydrocyclopenta[a]cyclopropa[e]phenanthren-9-yl)oxy)-5-(((2S,3R,4R)-3,4-dihydroxy-4-(hydroxymethyl)tetrahydrofuran-2-yl)oxy)-2-(hydroxymethyl)tetrahydro-2H-pyran-3,4-diol",
                     replacement="Cucurbitacin glycoside [2]", fixed=T) %>%
                gsub(pattern="(2S,3S,4S,5S,6R)-2-(((2aR,4S,5aS,7S,11aR,12aS)-4-hydroxy-3-((2R,5S)-5-(2-hydroxypropan-2-yl)-2-methyltetrahydrofuran-2-yl)-2a,5a,8,8-tetramethyl-9-(((2S,3R,4S,5R)-3,4,5-trihydroxytetrahydro-2H-pyran-2-yl)oxy)hexadecahydrocyclopenta[a]cyclopropa[e]phen...",
@@ -106,6 +107,7 @@ write_delim(Annotation_DAAs,
 #            plotContrast, FoldChange, pValue, padj) %>% 
 #     arrange(plotContrast, FoldChange) %>% View
 
+<<<<<<< HEAD
 annotation %>%
     inner_join(kept_mets,
                by = join_by("Average Rt(min)" == "Rt",
@@ -113,6 +115,12 @@ annotation %>%
                             "AnalysisMode" == "Analysis_mode")) %>%
     mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
                                          !(grepl("w/o MS2", `Metabolite name`)),
+=======
+#### Plot proportion of annotated DAAs ####
+Annotation_DAAs %>%
+    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
+                                         !grepl("w/o MS2", `Metabolite name`),
+>>>>>>> debbd2d (corrected annotations and output of annotation result)
                                      "Yes", "No"),
                               levels = c("Yes", "No")
     )
@@ -229,7 +237,7 @@ heatmap_data %>%
           # #axis.ticks.x = element_blank()
     )
 
-ggsave("plots/Annotated_heatmap_allModes_19082024.pdf",
+ggsave("plots/Annotated_heatmap_allModes_22082024.pdf",
        height=8, width=7, dpi=1200)
 ggsave("plots/Annotated_heatmap_allModes_19082024.svg",
        height=8, width=7, dpi=1200)
