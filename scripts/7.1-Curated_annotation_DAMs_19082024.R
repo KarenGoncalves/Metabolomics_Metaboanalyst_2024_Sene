@@ -107,20 +107,10 @@ write_delim(Annotation_DAAs,
 #            plotContrast, FoldChange, pValue, padj) %>% 
 #     arrange(plotContrast, FoldChange) %>% View
 
-<<<<<<< HEAD
-annotation %>%
-    inner_join(kept_mets,
-               by = join_by("Average Rt(min)" == "Rt",
-                            "Average Mz" == "Mz",
-                            "AnalysisMode" == "Analysis_mode")) %>%
-    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
-                                         !(grepl("w/o MS2", `Metabolite name`)),
-=======
 #### Plot proportion of annotated DAAs ####
 Annotation_DAAs %>%
     mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
                                          !grepl("w/o MS2", `Metabolite name`),
->>>>>>> debbd2d (corrected annotations and output of annotation result)
                                      "Yes", "No"),
                               levels = c("Yes", "No")
     )
@@ -239,5 +229,5 @@ heatmap_data %>%
 
 ggsave("plots/Annotated_heatmap_allModes_22082024.pdf",
        height=8, width=7, dpi=1200)
-ggsave("plots/Annotated_heatmap_allModes_19082024.svg",
+ggsave("plots/Annotated_heatmap_allModes_22082024.svg",
        height=8, width=7, dpi=1200)
