@@ -55,12 +55,83 @@ og_diff_abundance <-
                                   FoldChange > FC_threshold ~ "Up-regulated",
                                   .default = "None")) 
 
-subsets_diff_abundance <- 
-    sapply(paste0("AC9.", 1:3), simplify = F, \(x) {
-        og_diff_abundance %>%
-            filter(!grepl(x, plotContrast))
-    })
 
+diff_abundance_pPTGE30 <- 
+    og_diff_abundance %>%
+    filter(grepl("pPTGE30", Contrast))
+
+
+order_mets = ((og_diff_abundance %>%
+                   dplyr::select(Contrast,FoldChange, Metabolite) %>%
+                   pivot_wider(names_from = Contrast, values_from = FoldChange,
+                               values_fill = 0) %>%
+                   data.frame(row.names = .$Metabolite))[-1] %>%
+                  as.matrix() %>% dist() %>% hclust)
+
+color_limit = max(abs(og_diff_abundance$FoldChange)) %>%
+    ceiling()
+
+color_scale = c(-color_limit, -color_limit/2,
+                0, color_limit/2, color_limit)
+og_diff_abundance %>%
+    mutate(ordered_mets = Metabolite %>%
+               factor(levels = order_mets$labels[order_mets$order]),
+           Contrast_ordered = plotContrast %>%
+               factor(levels = sapply(1:6, \(x) paste(tableContrast$Numerator[x], "vs",
+                                                      tableContrast$Denominator[x]))
+               )
+    ) %>%
+    ggplot(aes(ordered_mets, y = Contrast_ordered, fill = FoldChange)) +
+    geom_tile() +
+    scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
+                         name = "Fold change",
+                         limits = range(color_scale),
+                         breaks = color_scale,
+                         labels = color_scale) +
+    labs(x = "", y="", fill="Fold Change") +
+    theme_classic() +
+    theme(legend.position = "bottom",
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+
+ggsave("plots/Siggenes_FC.pdf", 
+       width=8, height=6)
+
+order_mets = ((diff_abundance_pPTGE30 %>%
+                   dplyr::select(Contrast,FoldChange, Metabolite) %>%
+                   pivot_wider(names_from = Contrast, values_from = FoldChange,
+                               values_fill = 0) %>%
+                   data.frame(row.names = .$Metabolite))[-1] %>%
+                  as.matrix() %>% dist() %>% hclust)
+
+color_limit = max(abs(diff_abundance_pPTGE30$FoldChange)) %>%
+    ceiling()
+
+color_scale = c(-color_limit, -color_limit/2,
+                0, color_limit/2, color_limit)
+diff_abundance_pPTGE30 %>%
+    mutate(ordered_mets = Metabolite %>%
+               factor(levels = order_mets$labels[order_mets$order]),
+           Contrast_ordered = plotContrast %>%
+               factor(levels = sapply(1:3, \(x) paste(tableContrast$Numerator[x], "vs",
+                                                      tableContrast$Denominator[x]))
+               )
+    ) %>%
+    ggplot(aes(ordered_mets, y = Contrast_ordered, fill = FoldChange)) +
+    geom_tile() +
+    scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
+                         name = "Fold change",
+                         limits = range(color_scale),
+                         breaks = color_scale,
+                         labels = color_scale) +
+    labs(x = "", y="", fill="Fold Change") +
+    theme_classic() +
+    theme(legend.position = "bottom",
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+
+ggsave("plots/Siggenes_FC_pPTGE30.pdf", 
+       width=8, height=6)
 
 #### Plot peak normalized peak height ####
 DAMs_abundance <- mets_abundance %>%
@@ -127,13 +198,36 @@ zscore_plots <-
 ggsave(plot = zscore_plots, paste0("plots/Relative_abundance_DAAs_", Sys.Date(), ".pdf"), 
        height = 6, width = 8)
 
+#### All up/down AC9
 Metabolites_AC9 <- 
     (og_diff_abundance %>%
-         filter(grepl("E30", Contrast)) %>%
+         filter(grepl("pPTGE30", Contrast)) %>%
          group_by(Metabolite) %>%
          summarise(`Down-regulated` = length(which(Regulation == "Down-regulated")),
                    `Up-regulated` = length(which(Regulation == "Up-regulated"))) %>%
          filter(`Up-regulated` == 3 | `Down-regulated` == 3))[[1]]
+
+diff_abundance_pPTGE30 %>%
+    filter(Metabolite %in% Metabolites_AC9) %>%
+    mutate(Contrast_ordered = plotContrast %>%
+               factor(levels = sapply(1:3, \(x) paste(tableContrast$Numerator[x], "vs",
+                                                      tableContrast$Denominator[x]))
+               )
+    ) %>%
+    ggplot(aes(Metabolite, y = Contrast_ordered, 
+               fill = FoldChange)) +
+    geom_tile() +
+    scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
+                         name = "Fold change",
+                         limits = range(color_scale),
+                         breaks = color_scale,
+                         labels = color_scale) +
+    labs(x = "", y="", fill="Fold Change") +
+    theme_classic() +
+    theme(legend.position = "bottom",
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+
 
 pdf("plots/AllUp_or_AllDown_AC9.pdf", width=8, height = 8)
 zscore_DAMs %>%
