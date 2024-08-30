@@ -3,7 +3,7 @@
 # SSPA was removed in bioconductor version 3.14, install with url
 install.packages("https://bioconductor.org/packages/3.12/bioc/bin/windows/contrib/4.0/SSPA_2.30.0.zip")
 metanr_packages <- function(){
-    metr_pkgs <- c("Cairo", "Rserve", "qs", "pROC", "caret", "glasso",
+    metr_pkgs <- c("Cairo", "Rserve", "qs", "pROC", "caret", "glasso", "gplots",
                    "impute", "pcaMethods", "globaltest", "GlobalAncova", "gtools",
                    "Rgraphviz", "preprocessCore", "genefilter", "SSPA", 
                    "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", 
