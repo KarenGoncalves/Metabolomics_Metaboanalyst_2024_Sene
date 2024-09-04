@@ -28,7 +28,7 @@ for (i in 1:3) {
     mSet<-SanityCheckData(mSet);
     mSet<-ReplaceMin(mSet);
     mSet<-SanityCheckData(mSet);
-    mSet<-FilterVariable(mSet, qc.filter = "T", rsd = 25, 
+    mSet<-FilterVariable(mSet, qc.filter = "T", rsd = 20, 
                          var.filter = "none", var.cutoff = -1, 
                          int.filter = "mean", int.cutoff = 0)
     mSet<-PreparePrenormData(mSet);

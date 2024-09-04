@@ -54,7 +54,9 @@ og_diff_abundance <-
     mutate(Regulation = case_when(FoldChange < -FC_threshold ~ "Down-regulated",
                                   FoldChange > FC_threshold ~ "Up-regulated",
                                   .default = "None")) 
-
+write_delim(og_diff_abundance,
+            "Results/HeatmapData_longFormat.txt",
+            delim = "\t")
 
 diff_abundance_pPTGE30 <- 
     og_diff_abundance %>%
@@ -207,14 +209,21 @@ Metabolites_AC9 <-
                    `Up-regulated` = length(which(Regulation == "Up-regulated"))) %>%
          filter(`Up-regulated` == 3 | `Down-regulated` == 3))[[1]]
 
+order_mets <- diff_abundance_pPTGE30 %>%
+    group_by(Metabolite) %>% 
+    summarize(MeanFC = mean(FoldChange)) %>%
+    filter(Metabolite %in% Metabolites_AC9) %>%
+    arrange(desc(MeanFC))
+
 diff_abundance_pPTGE30 %>%
     filter(Metabolite %in% Metabolites_AC9) %>%
     mutate(Contrast_ordered = plotContrast %>%
                factor(levels = sapply(1:3, \(x) paste(tableContrast$Numerator[x], "vs",
                                                       tableContrast$Denominator[x]))
-               )
+               ),
+           orderedMets = Metabolite %>% factor(levels = order_mets$Metabolite)
     ) %>%
-    ggplot(aes(Metabolite, y = Contrast_ordered, 
+    ggplot(aes(orderedMets, x = Contrast_ordered, 
                fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
@@ -225,16 +234,12 @@ diff_abundance_pPTGE30 %>%
     labs(x = "", y="", fill="Fold Change") +
     theme_classic() +
     theme(legend.position = "bottom",
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
+          axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
 
 
 pdf("plots/AllUp_or_AllDown_AC9.pdf", width=8, height = 8)
-order_mets <- diff_abundance_pPTGE30 %>%
-    group_by(Metabolite) %>% 
-    summarize(MeanFC = mean(FoldChange)) %>%
-    filter(Metabolite %in% Metabolites_AC9) %>%
-    arrange(desc(MeanFC))
+
 
 zscore_DAMs %>%
     filter(Metabolite %in% Metabolites_AC9)  %>%
@@ -251,7 +256,7 @@ zscore_DAMs %>%
     facet_grid(cols = vars(Clone), 
                drop = T, scales = "free_x") +
     theme_classic() +
-    theme(axis.text.x=element_blank(),
+    theme(axis.text=element_blank(),
         legend.position = "bottom",
           strip.background = element_blank(),
           strip.text.y = element_blank(), 
@@ -274,22 +279,24 @@ pctDAMs <-
 
 pctDAMs %>%
     filter(Metabolite %in% Metabolites_AC9)  %>% 
-ggplot(aes(Metabolite, y = Replicate, fill = relAbundance)) +
+    mutate(orderedMets = factor(Metabolite, 
+                                levels=order_mets$Metabolite)) %>%
+    ggplot(aes(y=orderedMets,x = Replicate, fill = relAbundance)) +
     geom_tile() +
     scale_fill_gradient(low = "white", 
                         high = "#99000D") +
     labs(x = "", y="", fill="Relative peak intensity",
          caption = "rel peak intensity = (x * 100)/max(peak intensity)") +
-    facet_grid(rows = vars(Clone), 
-               drop = T, scales = "free_y") +
+    facet_grid(cols = vars(Clone), 
+               drop = T, scales = "free_x") +
     theme_classic() +
-    theme(legend.position = "bottom",
-          axis.text.x. = element_text(angle=90),
-          axis.ticks.x = element_blank(),
+    theme(axis.text=element_blank(),
+          legend.position = "bottom",
           strip.background = element_blank(),
           strip.text.y = element_blank(), 
           panel.spacing = unit(-2, "mm"),
           plot.margin = margin(r=-.2,
                                t=0, b=0, l=-.3,
                                'cm'))
-dev.off()
+ggsave("plots/percentage_AllUp_or_AllDown_AC9.pdf", 
+       dpi=300, width=8, height = 8)

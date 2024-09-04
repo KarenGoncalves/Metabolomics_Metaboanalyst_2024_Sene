@@ -19,7 +19,7 @@ tableContrast <-
 clones = c("AC9.1", "AC9.2", "AC9.3", "pPTGE30")
 FDR_threshold = 0.05
 adjusted_FDR_threshold = 0.00833333233333
-FC_threshold = 2
+ratio_threshold = 2
 
 met_abundance <- list()
 differential_abundance_all <- list()
@@ -54,7 +54,7 @@ for (i in 1:3) {
                             med = F, use.dm = T, 
                             var.equal = T,
                             control = samControl(n.delta = 120),
-                            R.fold = FC_threshold
+                            R.fold = ratio_threshold
                             
         )
         SAM@msg = c(contrastName, SAM@msg)

@@ -1,6 +1,7 @@
 library(tidyverse)
 
 blank_threshold = 3
+minReps = 3 # in how any replicates the metabolite needs to be present to be considered present in clone
 in_files = list.files(path = "Inputs",
                       pattern = "^LCMSMS.*rawHeight.txt",
                       full.names = T)
@@ -30,20 +31,19 @@ for (fileNumber in 1:3) {
     
     clones = metadata[!metadata$Groups %in% c("BLANK", "QC"),]$Groups %>% unique
     greater_than_blank = 
-        apply(measures[, !metadata$Groups  == "BLANK"], 
-              2, \(x) {
+        apply(measures[, !metadata$Groups  == "BLANK"], 2, \(x) {
                   result = (x - blank_value*blank_threshold)
-                  ifelse(result < 0, 0,
-                         result)
+                  # Then consider negative results as 0
+                  ifelse(result < 0, 0, result)
               }) %>% data.frame(row.names = rownames(measures))
     
-    present_twoMore_reps = 
+    present_inClone = 
         sapply(c(clones, "QC"), \(x) {
             colsInterest = (metadata %>%
                                 filter(Groups == x))$Replicates
             samples_GTB = greater_than_blank[, colsInterest] %>% 
                 apply(MARGIN=1, \(x) as.logical(x) %>% sum)
-            samples_GTB >= 2
+            samples_GTB >= minReps
         }) %>% as.data.frame 
     
     measures_greater_than_blank = greater_than_blank %>%
@@ -56,9 +56,9 @@ for (fileNumber in 1:3) {
            simplify = T, \(colName) {
             
             cloneName = metadata$Groups[metadata$Replicates == colName]
-            sapply(1:nrow(present_twoMore_reps), \(met) {
+            sapply(1:nrow(present_inClone), \(met) {
                 ifelse(
-                    present_twoMore_reps[met, cloneName],
+                    present_inClone[met, cloneName],
                     measures_greater_than_blank[met, colName],
                     0)
             })

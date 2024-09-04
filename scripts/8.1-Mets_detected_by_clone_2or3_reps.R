@@ -39,27 +39,27 @@ analytes_detected <-
     }) %>% as_tibble() 
 
 #### Detected in at least 2 reps ####
-analytes_detected_2orMore <- 
-    apply(analytes_detected, 2, \(x) {
-        x >= 2
-        })  %>%
-    as.data.frame(row.names = input$Metabolite) %>%
-    filter(rowSums(.) != 0) %>%
-    mutate(Metabolite = row.names(.)) %>%
-    separate(col = Metabolite, into = c("RT", "Mz"), 
-             sep = "/", convert = T)
-
-
-Annotation_2orMore <- 
-    read_delim("Results/Annotation_clean_names.txt") %>%
-    right_join(analytes_detected_2orMore, 
-               by = join_by("Average Rt(min)" == "RT",
-                            "Average Mz" == "Mz")) 
-
-annotated_detected_2orMore <- Annotation_2orMore %>%
-    filter(Clean_name != "Unknown" &
-               !grepl("w/o MS2", Clean_name))
-
+# analytes_detected_2orMore <- 
+#     apply(analytes_detected, 2, \(x) {
+#         x >= 2
+#         })  %>%
+#     as.data.frame(row.names = input$Metabolite) %>%
+#     filter(rowSums(.) != 0) %>%
+#     mutate(Metabolite = row.names(.)) %>%
+#     separate(col = Metabolite, into = c("RT", "Mz"), 
+#              sep = "/", convert = T)
+# 
+# 
+# Annotation_2orMore <- 
+#     read_delim("Results/Annotation_clean_names.txt") %>%
+#     right_join(analytes_detected_2orMore, 
+#                by = join_by("Average Rt(min)" == "RT",
+#                             "Average Mz" == "Mz")) 
+# 
+# annotated_detected_2orMore <- Annotation_2orMore %>%
+#     filter(Clean_name != "Unknown" &
+#                !grepl("w/o MS2", Clean_name))
+# 
 
 
 #### Detected in all reps ####
@@ -87,22 +87,22 @@ annotated_detected_all3 <-
 
 #### Venn plots ####
 ##### 2 or more #####
-par(cex=1, font=1); 
-
-pdf('plots/Venn_filteredMetaboanalyst_2orMore.pdf',
-    width=8, height=8, pointsize = 30)
-venn(analytes_detected_2orMore[, clones], main="Detected",
-     ilabels = "counts", 
-     ellipse = T, box = F, 
-     zcolor = "style", 
-     par = T)
-venn(annotated_detected_2orMore[, clones], main="Annotated", 
-     ilabels = "counts", 
-     ellipse = T, box = F, 
-     zcolor = "style", 
-     par = T)
-
-dev.off()
+# par(cex=1, font=1); 
+# 
+# pdf('plots/Venn_filteredMetaboanalyst_2orMore.pdf',
+#     width=8, height=8, pointsize = 30)
+# venn(analytes_detected_2orMore[, clones], main="Detected",
+#      ilabels = "counts", 
+#      ellipse = T, box = F, 
+#      zcolor = "style", 
+#      par = T)
+# venn(annotated_detected_2orMore[, clones], main="Annotated", 
+#      ilabels = "counts", 
+#      ellipse = T, box = F, 
+#      zcolor = "style", 
+#      par = T)
+# 
+# dev.off()
 
 ##### All three reps #####
 pdf('plots/Venn_filteredMetaboanalyst_all3.pdf',
@@ -121,9 +121,9 @@ venn(annotated_detected_all3[, clones], main="Annotated",
 dev.off()
 
 #### table ####
-annotated_detected_2orMore %>% 
-    filter(!pPTGE30) %>% 
-    select(Clean_name, INCHIKEY, all_of(clones)) 
+# annotated_detected_2orMore %>% 
+#     filter(!pPTGE30) %>% 
+#     select(Clean_name, INCHIKEY, all_of(clones)) 
 
 annotated_detected_all3 %>% 
     filter(!pPTGE30) %>% 
