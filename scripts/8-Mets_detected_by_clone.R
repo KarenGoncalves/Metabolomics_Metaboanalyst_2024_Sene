@@ -3,7 +3,7 @@ library(tidyverse)
 library(MetaboAnalystR)
 library(venn)
 
-clones <- c(paste0("AC9.", 1:3), "E30")
+clones <- c(paste0("AC9.", 1:3), "pPTGE30")
 Analysis_modes = c("HILIC_Positive",
                    "RP_Positive",
                    "RP_Negative")

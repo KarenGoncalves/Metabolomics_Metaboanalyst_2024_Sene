@@ -117,7 +117,7 @@ diff_abundance_pPTGE30 %>%
                                                       tableContrast$Denominator[x]))
                )
     ) %>%
-    ggplot(aes(ordered_mets, y = Contrast_ordered, fill = FoldChange)) +
+    ggplot(aes(y=ordered_mets, x = Contrast_ordered, fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
                          name = "Fold change",
@@ -127,11 +127,11 @@ diff_abundance_pPTGE30 %>%
     labs(x = "", y="", fill="Fold Change") +
     theme_classic() +
     theme(legend.position = "bottom",
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank())
 
 ggsave("plots/Siggenes_FC_pPTGE30.pdf", 
-       width=8, height=6)
+       width=6, height=8)
 
 #### Plot peak normalized peak height ####
 DAMs_abundance <- mets_abundance %>%
@@ -230,9 +230,17 @@ diff_abundance_pPTGE30 %>%
 
 
 pdf("plots/AllUp_or_AllDown_AC9.pdf", width=8, height = 8)
+order_mets <- diff_abundance_pPTGE30 %>%
+    group_by(Metabolite) %>% 
+    summarize(MeanFC = mean(FoldChange)) %>%
+    filter(Metabolite %in% Metabolites_AC9) %>%
+    arrange(desc(MeanFC))
+
 zscore_DAMs %>%
     filter(Metabolite %in% Metabolites_AC9)  %>%
-    ggplot(aes(Metabolite, y = Replicate, fill = zScore)) +
+    mutate(orderedMets = factor(Metabolite, 
+                                levels=order_mets$Metabolite)) %>%
+    ggplot(aes(y=orderedMets, x = Replicate, fill = zScore)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(7, "RdBu")), 
                          limits = c(-4, 4),
@@ -240,18 +248,19 @@ zscore_DAMs %>%
                          labels = seq(-4, 4, 2)) +
     labs(x = "", y="", fill="Relative peak intensity\n(z-score)",
          caption = "zscore = x - mean / std. dev") +
-    facet_grid(rows = vars(Clone), 
-               drop = T, scales = "free_y") +
+    facet_grid(cols = vars(Clone), 
+               drop = T, scales = "free_x") +
     theme_classic() +
-    theme(legend.position = "bottom",
-          axis.text.x. = element_text(angle=90),
-          axis.ticks.x = element_blank(),
+    theme(axis.text.x=element_blank(),
+        legend.position = "bottom",
           strip.background = element_blank(),
           strip.text.y = element_blank(), 
           panel.spacing = unit(-2, "mm"),
           plot.margin = margin(r=-.2,
                                t=0, b=0, l=-.3,
                                'cm'))
+ggsave("plots/zscore_AllUp_or_AllDown_AC9.pdf", 
+       dpi=300, width=8, height = 8)
 
 pctDAMs <- 
     sapply(DAMs_abundance$Metabolite %>% unique, 
