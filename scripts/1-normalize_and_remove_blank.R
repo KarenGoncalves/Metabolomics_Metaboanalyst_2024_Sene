@@ -8,6 +8,7 @@ out_files = sapply(in_files, \(x) {
     paste0("Inputs/CleanUp_", basename(x)) 
 })
 new_emptyVector = "pPTGE30"
+min_reps_pass_threshold=3
 
 for (fileNumber in 1:3) {
     input = read_delim(in_files[fileNumber]) %>%
@@ -41,9 +42,14 @@ for (fileNumber in 1:3) {
         sapply(c(clones, "QC"), \(x) {
             colsInterest = (metadata %>%
                                 filter(Groups == x))$Replicates
-            samples_GTB = greater_than_blank[, colsInterest] %>% 
-                apply(MARGIN=1, \(x) as.logical(x) %>% sum)
-            samples_GTB >= 2
+            if (min_reps_pass_threshold < length(colsInterest)) {
+                samples_GTB = greater_than_blank[, colsInterest] %>% 
+                    apply(MARGIN=1, \(x) as.logical(x) %>% sum)
+                samples_GTB >= min_reps_pass_threshold    
+            } else {
+                greater_than_blank[, colsInterest] %>% 
+                    apply(MARGIN=1, \(x) as.logical(x) %>% all)
+            }
         }) %>% as.data.frame 
     
     measures_greater_than_blank = greater_than_blank %>%
