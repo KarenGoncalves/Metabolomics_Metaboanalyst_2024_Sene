@@ -148,14 +148,18 @@ summary_DAMs <- DAMs_abundance %>%
     summarize(Mean_norm_abundance = mean(Height, na.rm=T),
               SD_norm_abundance = sd(Height, na.rm=T))
 
+
 zscore_DAMs <- 
     sapply(1:nrow(DAMs_abundance), simplify = F, \(x) {
         Met=DAMs_abundance$Metabolite[x]
         info = summary_DAMs %>%
-            filter(Metabolite == Met)
+            filter(Metabolite == Met) 
+            
+        
         DAMs_abundance[x,] %>%
-            mutate(zScore = (Height - info$Mean_norm_abundance) /
-                       info$SD_norm_abundance)
+            mutate(
+                zScore = (Height - info$Mean_norm_abundance) / info$SD_norm_abundance,
+                relAbundance = Height/mean(info$Mean_norm_abundance) %>% log2)
     }) %>% list_rbind()
 
 
@@ -207,32 +211,51 @@ Metabolites_AC9 <-
                    `Up-regulated` = length(which(Regulation == "Up-regulated"))) %>%
          filter(`Up-regulated` == 3 | `Down-regulated` == 3))[[1]]
 
+order_mets = ((diff_abundance_pPTGE30 %>%
+                   filter(Metabolite %in% Metabolites_AC9) %>% 
+                   dplyr::select(Contrast,FoldChange, Metabolite) %>%
+                   pivot_wider(names_from = Contrast, values_from = FoldChange,
+                               values_fill = 0) %>%
+                   data.frame(row.names = .$Metabolite))[-1] %>%
+                  as.matrix() %>% dist() %>% hclust)
+
+color_limit = max(abs(og_diff_abundance$FoldChange)) %>%
+    ceiling()
+
+color_scale = c(-color_limit, -color_limit/2,
+                0, color_limit/2, color_limit)
+
+    
 diff_abundance_pPTGE30 %>%
     filter(Metabolite %in% Metabolites_AC9) %>%
-    mutate(Contrast_ordered = plotContrast %>%
+    mutate(ordered_mets = Metabolite %>%
+               factor(levels = order_mets$labels[order_mets$order]),
+           Contrast_ordered = plotContrast %>%
                factor(levels = sapply(1:3, \(x) paste(tableContrast$Numerator[x], "vs",
                                                       tableContrast$Denominator[x]))
                )
     ) %>%
-    ggplot(aes(Metabolite, y = Contrast_ordered, 
+    ggplot(aes(ordered_mets, x = Contrast_ordered, 
                fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
-                         name = "Fold change",
                          limits = range(color_scale),
                          breaks = color_scale,
                          labels = color_scale) +
-    labs(x = "", y="", fill="Fold Change") +
+    labs(x = "", y="", 
+         fill="Fold\nChange") +
     theme_classic() +
-    theme(legend.position = "bottom",
-          axis.text.x = element_blank(),
+    theme(axis.text.y = element_text(size=7),
+          axis.text.x = element_text(size=7),
           axis.ticks.x = element_blank())
 
+ggsave("plots/FoldChange_AllUp_or_AllDown_AC9.pdf", width=5, height = 9,
+    dpi=1200)
 
 pdf("plots/AllUp_or_AllDown_AC9.pdf", width=8, height = 8)
 zscore_DAMs %>%
     filter(Metabolite %in% Metabolites_AC9)  %>%
-    ggplot(aes(Metabolite, y = Replicate, fill = zScore)) +
+    ggplot(aes(y=Metabolite, x = Replicate, fill = zScore)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(7, "RdBu")), 
                          limits = c(-4, 4),
@@ -240,18 +263,15 @@ zscore_DAMs %>%
                          labels = seq(-4, 4, 2)) +
     labs(x = "", y="", fill="Relative peak intensity\n(z-score)",
          caption = "zscore = x - mean / std. dev") +
-    facet_grid(rows = vars(Clone), 
-               drop = T, scales = "free_y") +
+    facet_grid(cols = vars(Clone), 
+               drop = T, scales = "free_x") +
     theme_classic() +
     theme(legend.position = "bottom",
-          axis.text.x. = element_text(angle=90),
+          axis.text.x = element_blank(),
+          axis.text.y=element_text(size=7),
           axis.ticks.x = element_blank(),
           strip.background = element_blank(),
-          strip.text.y = element_blank(), 
-          panel.spacing = unit(-2, "mm"),
-          plot.margin = margin(r=-.2,
-                               t=0, b=0, l=-.3,
-                               'cm'))
+          panel.spacing = unit(-2, "mm"))
 
 pctDAMs <- 
     sapply(DAMs_abundance$Metabolite %>% unique, 
@@ -265,22 +285,20 @@ pctDAMs <-
 
 pctDAMs %>%
     filter(Metabolite %in% Metabolites_AC9)  %>% 
-ggplot(aes(Metabolite, y = Replicate, fill = relAbundance)) +
+ggplot(aes(y=Metabolite, x = Replicate, fill = relAbundance)) +
     geom_tile() +
     scale_fill_gradient(low = "white", 
                         high = "#99000D") +
     labs(x = "", y="", fill="Relative peak intensity",
-         caption = "rel peak intensity = (x * 100)/max(peak intensity)") +
-    facet_grid(rows = vars(Clone), 
-               drop = T, scales = "free_y") +
+         caption = "rel peak intensity = log2(x * mean)") +
+    facet_grid(cols = vars(Clone), 
+               drop = T, scales = "free_x") +
     theme_classic() +
     theme(legend.position = "bottom",
-          axis.text.x. = element_text(angle=90),
+          axis.text.x = element_blank(),
+          axis.text.y=element_text(size=7),
           axis.ticks.x = element_blank(),
           strip.background = element_blank(),
-          strip.text.y = element_blank(), 
-          panel.spacing = unit(-2, "mm"),
-          plot.margin = margin(r=-.2,
-                               t=0, b=0, l=-.3,
-                               'cm'))
+          panel.spacing = unit(-2, "mm"))
 dev.off()
+

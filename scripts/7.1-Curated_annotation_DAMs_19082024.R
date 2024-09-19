@@ -177,5 +177,5 @@ heatmap_data %>%
           # #axis.ticks.x = element_blank()
     )
 
-ggsave("plots/Annotated_heatmap_allModes_19082024.pdf",
+ggsave("plots/Annotated_heatmap_allModes_18092024.pdf",
        height=8, width=7, dpi=1200)

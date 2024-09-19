@@ -72,8 +72,8 @@ mSet<-PlotPCAScree(
 mSet<-PlotPCA2DScore(
     mSet,
     imgName = paste0(plot_basename, "PCA_score2d"), 
-    format = "png", dpi=300, 
-    width=NA, pcx = 1, pcy = 2, reg = 0.99, 
+    format = "pdf", dpi=72, 
+    pcx = 1, pcy = 2, reg = 0.99, 
     show = 0, grey.scale = 0)
 
 
