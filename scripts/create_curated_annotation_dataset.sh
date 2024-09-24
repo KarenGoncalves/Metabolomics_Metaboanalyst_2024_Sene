@@ -7,7 +7,7 @@ get_annotation (){
 if [ -d "/e/Metabolomics_MetaboAnalyst_2024_Sene" ]; then
   disk=/e
 else
-  disk=/d
+  disk=/d/Work
 fi
 
 #Positive
