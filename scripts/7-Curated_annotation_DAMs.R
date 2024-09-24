@@ -71,10 +71,44 @@ names_to_correct <- annotation$Clean_name %in%
 annotation$Clean_name[names_to_correct] <- 
     str_to_sentence(annotation$Clean_name[names_to_correct])
 
-write_delim(annotation,
+
+# Which Rts do no match between filtered data and annotation (keep annotation one)
+
+MZs_with_RT_mismatch <- annotation %>%
+    right_join(kept_mets, # keep all from kept_mets
+               by = join_by("Average Rt(min)","Average Mz",
+                            "AnalysisMode" == "Analysis_mode")) %>%
+    filter(is.na(`Metabolite name`)) %>%
+    select(2, 3, "AnalysisMode")
+
+
+MZs_with_RT_mismatch_corrected <- 
+    sapply(1:nrow(MZs_with_RT_mismatch), simplify = F, \(x) {
+    MZ_mismatch_info <- MZs_with_RT_mismatch[x, ]
+    
+    (annotation %>% 
+            filter(AnalysisMode == MZ_mismatch_info$AnalysisMode, 
+                   `Average Mz` %in% MZ_mismatch_info$`Average Mz`)) %>%
+        select(2, 3, "AnalysisMode") %>%
+        rename(Analysis_mode = AnalysisMode)
+} ) %>% list_rbind()
+
+kept_mets <- rbind(kept_mets,
+                   MZs_with_RT_mismatch_corrected)
+filtered_mets_annotation <- annotation %>%
+    inner_join(kept_mets,
+               by = join_by("Average Rt(min)","Average Mz",
+                            "AnalysisMode" == "Analysis_mode")) %>%
+    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
+                                         !(grepl("w/o MS2", `Metabolite name`)),
+                                     "Yes", "No"),
+                              levels = c("Yes", "No")
+    )
+    )
+
+write_delim(filtered_mets_annotation,
             "Results/Annotation_clean_names.txt",
             delim = "\t", na = "NA")
-
 #### Keep only significantly DAAs ####
 differential_abundance_sig <- 
     differential_abundance_all %>%
@@ -110,16 +144,8 @@ write_delim(Annotation_DAAs,
 #     arrange(plotContrast, FoldChange) %>% View
 
 #### Plot proportion of annotated DAAs ####
-proportion_detected_annotated <- annotation %>%
-    inner_join(kept_mets,
-               by = join_by("Average Rt(min)","Average Mz",
-                            "AnalysisMode" == "Analysis_mode")) %>%
-    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
-                                         !(grepl("w/o MS2", `Metabolite name`)),
-                              "Yes", "No"),
-                              levels = c("Yes", "No")
-                              )
-           ) %>%
+proportion_detected_annotated <- 
+    filtered_mets_annotation %>%
     group_by(Annotated, AnalysisMode) %>%
     summarize(Analytes = length(`Metabolite name`)) %>%
     group_by(AnalysisMode) %>%
@@ -169,6 +195,7 @@ heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
     )  %>% 
     filter(Clean_name != "Unknown" &
                !grepl("w/o MS2", Clean_name)) 
+
 putative_annotations <- 
     heatmap_data %>% select(Clean_name, INCHIKEY, Metabolite_nameUnique) %>%
     unique %>% group_by(Clean_name) %>% 
