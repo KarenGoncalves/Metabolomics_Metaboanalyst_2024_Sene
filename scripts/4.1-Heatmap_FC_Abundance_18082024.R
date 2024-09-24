@@ -112,12 +112,9 @@ color_scale = c(-color_limit, -color_limit/2,
 diff_abundance_pPTGE30 %>%
     mutate(ordered_mets = Metabolite %>%
                factor(levels = order_mets$labels[order_mets$order]),
-           Contrast_ordered = plotContrast %>%
-               factor(levels = sapply(1:3, \(x) paste(tableContrast$Numerator[x], "vs",
-                                                      tableContrast$Denominator[x]))
-               )
+           strainsInterest =  gsub(' .+', '', plotContrast)
     ) %>%
-    ggplot(aes(y=ordered_mets, x = Contrast_ordered, fill = FoldChange)) +
+    ggplot(aes(y=ordered_mets, x = strainsInterest, fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
                          name = "Fold change",
@@ -127,8 +124,8 @@ diff_abundance_pPTGE30 %>%
     labs(x = "", y="", fill="Fold Change") +
     theme_classic() +
     theme(legend.position = "bottom",
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank())
 
 ggsave("plots/Siggenes_FC_pPTGE30.pdf", 
        width=6, height=8)
