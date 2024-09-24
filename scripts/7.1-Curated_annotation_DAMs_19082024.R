@@ -153,13 +153,9 @@ colors["0"] = "white"
 heatmap_data %>%
     mutate(ordered_mets = Metabolite_nameplot %>%
                factor(levels = order_mets$labels[order_mets$order]),
-           Contrast_ordered = plotContrast %>%
-               factor(levels = sapply(1:nrow(tableContrast), \(x) {
-                   paste(tableContrast$Numerator[x], "vs",
-                         tableContrast$Denominator[x])
-               }))
+           strainsInterest = gsub(" .+", "", plotContrast)
     ) %>%
-    ggplot(aes(y=ordered_mets, x = Contrast_ordered, fill = FoldChange)) +
+    ggplot(aes(y=ordered_mets, x = strainsInterest, fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = colors, 
                          name = "Fold change",
@@ -170,12 +166,11 @@ heatmap_data %>%
     theme_classic() +
     theme(
         # legend.position = "bottom",
-          axis.text.x = element_text(angle=45, hjust=1, vjust=1),
           axis.text.y = element_text(size=7),
           # legend.key.height = unit(5, "mm"),
           # legend.key.width = unit(1, "cm"),
           # #axis.ticks.x = element_blank()
     )
 
-ggsave("plots/Annotated_heatmap_allModes_18092024.pdf",
+ggsave("plots/Annotated_heatmap_allModes_24092024.pdf",
        height=8, width=7, dpi=1200)
