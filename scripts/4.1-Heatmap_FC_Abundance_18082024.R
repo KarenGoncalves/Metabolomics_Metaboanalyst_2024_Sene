@@ -51,9 +51,10 @@ og_diff_abundance <-
     filter(pValue < FDR_threshold,
            abs(FoldChange) > FC_threshold
     ) %>% 
-    mutate(Regulation = case_when(FoldChange < -FC_threshold ~ "Down-regulated",
-                                  FoldChange > FC_threshold ~ "Up-regulated",
-                                  .default = "None")) 
+    mutate(Regulation = 
+               case_when(FoldChange < -FC_threshold ~ "Down-regulated",
+                         FoldChange > FC_threshold ~ "Up-regulated",
+                         .default = "None")) 
 
 
 diff_abundance_pPTGE30 <- 
@@ -227,13 +228,9 @@ diff_abundance_pPTGE30 %>%
     filter(Metabolite %in% Metabolites_AC9) %>%
     mutate(ordered_mets = Metabolite %>%
                factor(levels = order_mets$labels[order_mets$order]),
-           Contrast_ordered = plotContrast %>%
-               factor(levels = sapply(1:3, \(x) paste(tableContrast$Numerator[x], "vs",
-                                                      tableContrast$Denominator[x]))
-               )
+           strainsInterest =  gsub(' .+', '', plotContrast)
     ) %>%
-    ggplot(aes(ordered_mets, x = Contrast_ordered, 
-               fill = FoldChange)) +
+    ggplot(aes(y=ordered_mets, x = strainsInterest, fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
                          limits = range(color_scale),
@@ -243,7 +240,7 @@ diff_abundance_pPTGE30 %>%
          fill="Fold\nChange") +
     theme_classic() +
     theme(axis.text.y = element_text(size=7),
-          axis.text.x = element_text(size=7),
+          axis.text.x = element_text(size=10),
           axis.ticks.x = element_blank())
 
 ggsave("plots/FoldChange_AllUp_or_AllDown_AC9.pdf", width=5, height = 9,
