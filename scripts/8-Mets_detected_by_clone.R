@@ -3,7 +3,7 @@ library(tidyverse)
 library(MetaboAnalystR)
 library(venn)
 
-clones <- c(paste0("AC9.", 1:3), "E30")
+clones <- c(paste0("AC9.", 1:3), "pPTGE30")
 Analysis_modes = c("HILIC_Positive",
                    "RP_Positive",
                    "RP_Negative")
@@ -19,10 +19,15 @@ analytes_detected <- sapply(1:length(Analysis_modes), simplify = F, \(i) {
     featuresKept_metaboanalyst <- 
         mSet[["dataSet"]][["filt"]] %>% colnames
     
-    input = read_delim(file)
-    metadata = data.frame(Clone = input[1, -1] %>% unlist %>% unname ,
+    input = read_delim(file) 
+    names(input) <- gsub("E30", clones[4], names(input))
+    
+    metadata = data.frame(Clone = input[1, -1] %>% unlist %>% unname %>%
+                              gsub("^E30", clones[4], .),
                           Replicate = names(input)[-1]) %>%
         filter(Clone != "QC")
+    
+    
     input_logical = as.data.frame(input[-1,],
                                   row.names = input[-1,1] %>% c)[-1] %>%
         apply(MARGIN=2, \(x) as.numeric(x) %>% as.logical )
@@ -44,7 +49,8 @@ Annotation <-
     right_join(analytes_detected, 
                by = join_by("Average Rt(min)" == "RT",
                             "Average Mz" == "Mz")) 
-
+names(Annotation) <- 
+    gsub("^E30", clones[4], names(Annotation))
 annotated_detected <- Annotation %>%
     filter(Clean_name != "Unknown" &
                !grepl("w/o MS2", Clean_name))
@@ -54,6 +60,7 @@ annotated_detected <- Annotation %>%
 par(cex=1, font=1); 
 venn_detected <- analytes_detected %>%
     select(all_of(clones))
+nrow(venn_detected)
 
 pdf('plots/Venn_filteredMetaboanalyst_detected.pdf',
     width=8, height=8, pointsize = 30)
@@ -67,7 +74,7 @@ dev.off()
 venn_annotated_detected <- 
     annotated_detected %>%
     select(all_of(clones))
-
+nrow(venn_annotated_detected)
 
 pdf('plots/Venn_filteredMetaboanalyst_annotatedDetected.pdf',
     width=8, height=8, pointsize = 30)
