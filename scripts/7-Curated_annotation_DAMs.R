@@ -17,12 +17,13 @@ kept_mets <- sapply(Analysis_modes, simplify = F, \(x){
     )
 }) %>% list_rbind() %>%
     separate(MetID, 
-             into = c("Rt", "Mz"),
+             into = c("Average Rt(min)", "Average Mz"),
              sep = "/",
              convert = T)
 
 #### Load data ####
 load("Results/Siggenes_DAAs.RData")
+
 annotation <- sapply(Analysis_modes, simplify = F, \(x) {
     paste0("Inputs/Corrected_LCMSMS_", x, "_identification.txt") %>%
         read_delim(delim = "\t", na = "null") %>%
@@ -63,9 +64,6 @@ annotation <- sapply(Analysis_modes, simplify = F, \(x) {
                     replacement="Isoflavonoid C-glycoside [1]", fixed=T)
     )
 
-write_delim(annotation,
-            "Results/Annotation_clean_names.txt",
-            delim = "\t", na = "NA")
 
 # Replace with sentence case names
 names_to_correct <- annotation$Clean_name %in% 
@@ -73,6 +71,9 @@ names_to_correct <- annotation$Clean_name %in%
 annotation$Clean_name[names_to_correct] <- 
     str_to_sentence(annotation$Clean_name[names_to_correct])
 
+write_delim(annotation,
+            "Results/Annotation_clean_names.txt",
+            delim = "\t", na = "NA")
 
 #### Keep only significantly DAAs ####
 differential_abundance_sig <- 
@@ -109,10 +110,9 @@ write_delim(Annotation_DAAs,
 #     arrange(plotContrast, FoldChange) %>% View
 
 #### Plot proportion of annotated DAAs ####
-annotation %>%
+proportion_detected_annotated <- annotation %>%
     inner_join(kept_mets,
-               by = join_by("Average Rt(min)" == "Rt",
-                            "Average Mz" == "Mz",
+               by = join_by("Average Rt(min)","Average Mz",
                             "AnalysisMode" == "Analysis_mode")) %>%
     mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
                                          !(grepl("w/o MS2", `Metabolite name`)),
@@ -130,7 +130,9 @@ annotation %>%
            Mode =
                case_when(AnalysisMode == "HILIC_Positive" ~ "HILIC\nPositive",
                          AnalysisMode == "RP_Positive" ~ "Reversed phase\nPositive",
-                         .default = "Reversed phase\nNegative")) %>%
+                         .default = "Reversed phase\nNegative")) 
+
+proportion_detected_annotated %>%
     ggplot(aes(x = "", Proportion, fill=Annotated,
                label = Analytes)) +
     geom_col() +
