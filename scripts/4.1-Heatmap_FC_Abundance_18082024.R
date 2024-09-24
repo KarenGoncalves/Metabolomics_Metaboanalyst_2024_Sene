@@ -117,7 +117,7 @@ diff_abundance_pPTGE30 %>%
                                                       tableContrast$Denominator[x]))
                )
     ) %>%
-    ggplot(aes(ordered_mets, y = Contrast_ordered, fill = FoldChange)) +
+    ggplot(aes(y=ordered_mets, x = Contrast_ordered, fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = rev(brewer.pal(11, "RdBu")), 
                          name = "Fold change",
@@ -131,7 +131,7 @@ diff_abundance_pPTGE30 %>%
           axis.ticks.x = element_blank())
 
 ggsave("plots/Siggenes_FC_pPTGE30.pdf", 
-       width=8, height=6)
+       width=6, height=8)
 
 #### Plot peak normalized peak height ####
 DAMs_abundance <- mets_abundance %>%
