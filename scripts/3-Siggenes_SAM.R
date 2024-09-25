@@ -19,7 +19,7 @@ tableContrast <-
 clones = c("AC9.1", "AC9.2", "AC9.3", "pPTGE30")
 FDR_threshold = 0.05
 adjusted_FDR_threshold = 0.00833333233333
-FC_threshold = 2
+FC_threshold = 1
 
 met_abundance <- list()
 differential_abundance_all <- list()
@@ -31,13 +31,13 @@ for (i in 1:3) {
     rm("mSet")
     load(inFiles[i])
     
-    met_abundance[[i]] <- mSet$dataSet$norm 
+    met_abundance[[i]] <- mSet$dataSet$filt 
     differential_abundance <- list()
     
     for (j in 1:nrow(tableContrast)){
         print(tableContrast[j,])
         contrastName = paste0(tableContrast[j,1], "_v_", tableContrast[j,2])
-        replicates = rownames(mSet$dataSet$norm)
+        replicates = rownames(met_abundance[[i]])
         cls_subset = factor(rep(tableContrast[j,] %>% unlist, each = 3))
         
         if (tableContrast[j,2] == "pPTGE30")  {
@@ -46,39 +46,52 @@ for (i in 1:3) {
         }
         mSet_subset_norm = 
             met_abundance[[i]][c(grep(levels(cls_subset)[1], replicates),
-                                 grep(levels(cls_subset)[2], replicates)), ]
-        SAM = siggenes::sam(t(mSet_subset_norm), 
+                                 grep(levels(cls_subset)[2], replicates)), ] %>%
+            t %>% as.data.frame()
+        
+        SAM = siggenes::sam(mSet_subset_norm, 
                             cl = cls_subset, 
-                            method = "d.stat", B=100, 
+                            method = "d.stat", B=200, 
                             gene.names = names(mSet_subset_norm), 
                             med = F, use.dm = T, 
-                            var.equal = T,
-                            control = samControl(n.delta = 120),
-                            R.fold = FC_threshold
-                            
+                            var.equal = F, 
+                            R.fold = 1
         )
+        
         SAM@msg = c(contrastName, SAM@msg)
         
-        deltaValue = findDelta(SAM, fdr = adjusted_FDR_threshold)
+        deltaValue = findDelta(SAM, fdr = FDR_threshold)
         if (nrow(deltaValue) %>% is.null) {
             deltaValue = deltaValue["Delta"]
         } else {
             deltaValue = deltaValue[order(deltaValue[,"FDR"]), "Delta"]
         }
-        sam.plot2(SAM, deltaValue, sig.col = c("blue", "red"), 
-                  main = paste0(tableContrast[j,1], " vs ", tableContrast[j,2])
-        )
+        
+        FC <- sapply(rownames(mSet_subset_norm), \(x) {
+            numerator_cols = grep(tableContrast[j,1], colnames(mSet_subset_norm))
+            denominator_cols = grep(tableContrast[j,2], colnames(mSet_subset_norm))
+            fold_change <- 
+                (rowMeans(mSet_subset_norm[x,numerator_cols]) / 
+                    rowMeans(mSet_subset_norm[x,denominator_cols])) %>% 
+                log2
+            ifelse(abs(fold_change) < FC_threshold,
+                   0, fold_change)
+        })
         
         differential_abundance[[contrastName]] <- 
             data.frame(AnalysisMode = AM,
                        Contrast = contrastName,
                        plotContrast = paste0(tableContrast[j,1], " vs ", tableContrast[j,2]),
-                       Metabolite = names(SAM@d),
-                       Ratio_Change = 1/SAM@fold,
-                       FoldChange = log2(1/SAM@fold),
+                       Metabolite = rownames(mSet_subset_norm),
+                       Fold = 1/SAM@fold,
                        pValue = SAM@p.value,
-                       padj = SAM@q.value) 
-                         
+                       padj = SAM@q.value)
+        differential_abundance[[contrastName]]$FoldChange = 
+            sapply(1:nrow(differential_abundance[[contrastName]]), \(x) {           
+                with(differential_abundance[[contrastName]],
+                     ifelse(pValue[x] < FDR_threshold, FC[x], 0)
+                )
+            })
     }
     differential_abundance_all[[AM]] <- 
         differential_abundance %>%
