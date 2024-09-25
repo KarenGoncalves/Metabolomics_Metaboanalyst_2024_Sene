@@ -17,7 +17,7 @@ tableContrast <-
                Denominator = c("pPTGE30", "pPTGE30", "pPTGE30", 
                                "AC9.3", "AC9.3", "AC9.2"))
 clones = c("AC9.1", "AC9.2", "AC9.3", "pPTGE30")
-FDR_threshold = 0.05
+FDR_threshold = 0.01
 adjusted_FDR_threshold = 0.00833333233333
 FC_threshold = 1
 
