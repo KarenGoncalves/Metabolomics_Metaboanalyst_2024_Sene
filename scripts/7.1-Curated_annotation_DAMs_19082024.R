@@ -6,7 +6,7 @@ library(RColorBrewer)
 Analysis_modes = c("HILIC_Positive",
                    "RP_Positive",
                    "RP_Negative")
-FDR_threshold = 0.05
+FDR_threshold = 0.01
 FC_threshold = 1
 empty_vector =  "pPTGE30"
 
@@ -96,18 +96,11 @@ Annotation_DAAs$Clean_name[names_to_correct] <-
 
 
 #### Heatmap of annotated analytes ####
-heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
-    separate(col = Metabolite, 
-             into = c("Rt", "Mz"), 
-             sep = "/",  convert = T) %>%
-    inner_join(Annotation_DAAs[, c("Clean_name", "INCHIKEY",
-                                   "AnalysisMode", "Formula",
-                                   "Manually modified for annotation", 
-                                   "Average Rt(min)", "Average Mz")] %>%
-                   filter(Clean_name != "Unknown"),
-               by = join_by("Rt" == "Average Rt(min)",
-                            "Mz" == "Average Mz",
-                            "AnalysisMode" == "AnalysisMode")) %>% 
+heatmap_data <- 
+    Annotation_DAAs %>%
+    rename("Rt" = "Average Rt(min)",
+           "Mz" = "Average Mz",
+           "AnalysisMode" = "AnalysisMode") %>% 
     mutate(Metabolite_nameUnique = paste0(Clean_name, " ", 
                                           Rt, "/", Mz)
     ) %>% filter(grepl(empty_vector, Contrast))  %>% 
