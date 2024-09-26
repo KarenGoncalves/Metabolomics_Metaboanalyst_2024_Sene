@@ -20,10 +20,8 @@ analytes_detected <- sapply(1:length(Analysis_modes), simplify = F, \(i) {
         mSet[["dataSet"]][["filt"]] %>% colnames
     
     input = read_delim(file) 
-    names(input) <- gsub("E30", clones[4], names(input))
-    
-    metadata = data.frame(Clone = input[1, -1] %>% unlist %>% unname %>%
-                              gsub("^E30", clones[4], .),
+
+    metadata = data.frame(Clone = input[1, -1] %>% unlist %>% unname ,
                           Replicate = names(input)[-1]) %>%
         filter(Clone != "QC")
     
