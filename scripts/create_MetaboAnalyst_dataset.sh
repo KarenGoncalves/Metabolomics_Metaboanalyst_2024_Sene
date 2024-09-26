@@ -25,7 +25,7 @@ awk 'BEGIN {FS="\t";OFS="/"; print "Sample\nLabel"}\
  NR > 5 {print $2,$3}'  "${input}"\
  > tmp_RowNames
 
-paste tmp_RowNames tmp_file > ${output}
+paste tmp_RowNames tmp_file | sed 's/E30/pPTGE30/g' > ${output}
 
 rm tmp_file tmp_RowNames tmp_Raw_height tmp_row2 tmp_header
 }
