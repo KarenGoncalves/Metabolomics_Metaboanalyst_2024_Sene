@@ -12,7 +12,7 @@ nsamples=$4
 col_end=$((${col_start} + ${nsamples}))
 
 head -n5 "${input}" |\
- tail -n 1 | cut -f 36-52 > tmp_header
+ tail -n 1 | cut -f ${col_start}-${col_end} > tmp_header
 
 cat tmp_header | sed -E 's/([A-Z0-9\.]+)([\._])([I12]+)\t/\1\t/g' |\
  sed -E 's/([A-Za-z]+\.blank[\.a-z]*)/BLANK/g' > tmp_row2
