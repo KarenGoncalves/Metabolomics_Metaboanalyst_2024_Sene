@@ -38,8 +38,11 @@ annotation_DAAs <-
                by = join_by("Average Rt(min)" == "Rt",
                             "Average Mz" == "Mz",
                             "AnalysisMode" == "AnalysisMode")) %>%
-    mutate(Annotation = ifelse(`MS/MS matched` == T,
-                               `Metabolite name`, "Unknown")
+    mutate(Annotation = 
+               ifelse(
+                   `MS/MS matched` == T & !grepl("w/o MS2", `Metabolite name`),
+                   `Metabolite name`, "Unknown"
+                   )
 ) 
 write_delim(annotation_DAAs,
             file="Results/annotation_DAAs.txt",
