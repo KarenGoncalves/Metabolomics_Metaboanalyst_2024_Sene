@@ -24,9 +24,6 @@ met_abundance <- list()
 differential_abundance_all <- list()
 for (i in 1:3) {
     AM=Analysis_modes[i]
-    pdf(file = paste0(plot_basename[i], 
-                      "Differential_analysis.pdf"),
-        width = 6, height = 6, onefile = T)
     rm("mSet")
     load(inFiles[i])
     
@@ -53,18 +50,11 @@ for (i in 1:3) {
                             method = "d.stat", B=200, 
                             gene.names = names(mSet_subset_norm), 
                             med = F, use.dm = T, 
-                            var.equal = F, 
+                            var.equal = T, 
                             R.fold = 1
         )
         
         SAM@msg = c(contrastName, SAM@msg)
-        
-        deltaValue = findDelta(SAM, fdr = FDR_threshold)
-        if (nrow(deltaValue) %>% is.null) {
-            deltaValue = deltaValue["Delta"]
-        } else {
-            deltaValue = deltaValue[order(deltaValue[,"FDR"]), "Delta"]
-        }
         
         FC <- sapply(rownames(mSet_subset_norm), \(x) {
             numerator_cols = grep(tableContrast[j,1], colnames(mSet_subset_norm))
@@ -95,11 +85,13 @@ for (i in 1:3) {
     differential_abundance_all[[AM]] <- 
         differential_abundance %>%
         list_rbind()
-dev.off()
 }
 
 for (i in list.files(".", patter=".(qs|csv)")) {
+    # remove these temporary files
     file.remove(i)
 }
 
-save(differential_abundance_all, file = "Results/Siggenes_DAAs.RData")
+differential_abundance_all %>% list_rbind() %>%
+    write_delim(file = "Results/Siggenes_DAAs.txt",
+                quote="none", append = F, delim="\t")
