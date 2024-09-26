@@ -7,13 +7,12 @@ in_files = list.files(path = "Inputs",
 out_files = sapply(in_files, \(x) {
     paste0("Inputs/CleanUp_", basename(x)) 
 })
-new_emptyVector = "pPTGE30"
 min_reps_pass_threshold=3
 
 for (fileNumber in 1:3) {
-    input = read_delim(in_files[fileNumber]) %>%
-        as.data.frame()
-    names(input) <- gsub("E30", new_emptyVector, names(input))
+    input = read_delim(in_files[fileNumber], delim = "\t") %>%
+        as.data.frame
+    
     print(head(n=2, input))
     input[1,grepl("BLANK", input[1,])] = "BLANK"
     metadata = data.frame(Replicates = names(input)[-1],
@@ -84,3 +83,4 @@ for (fileNumber in 1:3) {
     ) %>% as_tibble %>%
         write_delim(file = out_files[fileNumber], delim = "\t", append = F)
 }
+
