@@ -31,12 +31,12 @@ paste tmp_RowNames tmp_file | sed 's/E30/pPTGE30/g' > ${output}
 rm tmp_file tmp_RowNames tmp_Raw_height tmp_row2 tmp_header
 }
 
-#Positive 
+#Positive : 17 samples in columns 36-52
 
-create_dataset RAW_DATA/LCMSMS_RP_Positive_MSDial.txt Inputs/LCMSMS_RP_Positive_rawHeight.txt 36 17
+create_dataset RAW_DATA/LCMSMS_RP_Positive_MSDial.txt Inputs/LCMSMS_RP_Positive_rawHeight.txt 36 16
 
-##Negative 
-create_dataset RAW_DATA/LCMSMS_RP_Negative_MSDial.txt Inputs/LCMSMS_RP_Negative_rawHeight.txt 36 17
+##Negative  : 17 samples in columns 36-52
+create_dataset RAW_DATA/LCMSMS_RP_Negative_MSDial.txt Inputs/LCMSMS_RP_Negative_rawHeight.txt 36 16
 
-##HILIC 
-create_dataset RAW_DATA/LCMSMS_HILIC_Positive_MSDial.txt Inputs/LCMSMS_HILIC_Positive_rawHeight.txt 36 16 
+##HILIC  : 16 samples in columns 36-51
+create_dataset RAW_DATA/LCMSMS_HILIC_Positive_MSDial.txt Inputs/LCMSMS_HILIC_Positive_rawHeight.txt 36 15
