@@ -32,10 +32,10 @@ rm tmp_file tmp_RowNames tmp_Raw_height tmp_row2 tmp_header
 
 #Positive 
 
-create_dataset 32 RAW_DATA/LCMSMS_RP_Positive_MSDial.txt Inputs/LCMSMS_RP_Positive_rawHeight.txt
+create_dataset 36 RAW_DATA/LCMSMS_RP_Positive_MSDial.txt Inputs/LCMSMS_RP_Positive_rawHeight.txt
 
 ##Negative 
-create_dataset 32 RAW_DATA/LCMSMS_RP_Negative_MSDial.txt Inputs/LCMSMS_RP_Negative_rawHeight.txt
+create_dataset 36 RAW_DATA/LCMSMS_RP_Negative_MSDial.txt Inputs/LCMSMS_RP_Negative_rawHeight.txt
 
 ##HILIC 
-create_dataset 32 RAW_DATA/LCMSMS_HILIC_Positive_MSDial.txt Inputs/LCMSMS_HILIC_Positive_rawHeight.txt
+create_dataset 36 RAW_DATA/LCMSMS_HILIC_Positive_MSDial.txt Inputs/LCMSMS_HILIC_Positive_rawHeight.txt
