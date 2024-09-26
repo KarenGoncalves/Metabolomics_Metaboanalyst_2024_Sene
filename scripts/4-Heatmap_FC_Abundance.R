@@ -14,7 +14,7 @@ tableContrast <-
                              "AC9.1", "AC9.2", "AC9.1"),
                Denominator = c("pPTGE30", "pPTGE30", "pPTGE30", 
                                "AC9.3", "AC9.3", "AC9.2"))
-FDR_threshold = 0.05
+FDR_threshold = 0.01
 FC_threshold = 1
 
 #### Load data ####
@@ -43,11 +43,8 @@ sapply(mets_abundance, class)
 
 
 #### Plot differential abundance ####
-load("Results/Siggenes_DAAs.RData")
-
 og_diff_abundance <- 
-    differential_abundance_all %>%
-    list_rbind() %>%
+    read_delim("Results/Siggenes_DAAs.txt") %>%
     filter(pValue < FDR_threshold,
            abs(FoldChange) > FC_threshold
     ) %>% 
