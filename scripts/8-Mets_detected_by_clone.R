@@ -84,7 +84,7 @@ venn(venn_annotated_detected,
 dev.off()
 
 annotated_detected %>% 
-    filter(!E30) %>% 
+    filter(!pPTGE30) %>% 
     select(Clean_name, INCHIKEY, all_of(clones)) %>%
     write_delim(file = "Results/Annotated_notInE30.txt",
                 delim="\t")
