@@ -6,7 +6,7 @@ library(MetaboAnalystR)
 Analysis_modes = c("HILIC_Positive",
                    "RP_Positive",
                    "RP_Negative")
-FDR_threshold = 0.05
+FDR_threshold = 0.01
 FC_threshold = 1
 
 #### Load data ####
