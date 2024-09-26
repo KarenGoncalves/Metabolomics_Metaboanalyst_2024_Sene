@@ -1,0 +1,13 @@
+plotMode	Annotated	Detected	N
+HILIC
+Positive	Yes	3187	19
+HILIC
+Positive	No	3187	3168
+Reverse-phase
+Negative	Yes	3188	8
+Reverse-phase
+Negative	No	3188	3180
+Reverse-phase
+Positive	Yes	7037	29
+Reverse-phase
+Positive	No	7037	7008

@@ -47,8 +47,7 @@ Annotation <-
     right_join(analytes_detected, 
                by = join_by("Average Rt(min)" == "RT",
                             "Average Mz" == "Mz")) 
-names(Annotation) <- 
-    gsub("^E30", clones[4], names(Annotation))
+
 annotated_detected <- Annotation %>%
     filter(Clean_name != "Unknown" &
                !grepl("w/o MS2", Clean_name))
@@ -88,3 +87,40 @@ annotated_detected %>%
     select(Clean_name, INCHIKEY, all_of(clones)) %>%
     write_delim(file = "Results/Annotated_notInE30.txt",
                 delim="\t")
+
+### Proportions ###
+proportion_annotated = 
+    Annotation %>%
+    group_by(AnalysisMode) %>%
+    summarize(`With annotation` = which(Clean_name != "Unknown") %>% length,
+              Detected = n(),
+              `Without annotation` = Detected - `With annotation`) %>%
+    pivot_longer(cols = c(`With annotation`, `Without annotation`),
+                 names_to = "Which",
+                 values_to = "N") %>%
+    mutate(Proportion = N/Detected,
+           plotMode = gsub("RP_", "Reverse-phase\n", AnalysisMode) %>%
+               gsub(pattern="_", replacement="\n"),
+           Annotated = ifelse(Which == "With annotation", "Yes", "No")
+           ) %>%
+    select(plotMode, Annotated, Detected, N, Proportion)
+
+write_delim("Results/Proportion_analytes_annotated.txt",
+            x = proportion_annotated %>% select(!Proportion),
+            quote = "none", delim="\t")
+
+proportion_annotated %>%
+    ggplot(aes(y = Proportion, x = "", fill = Annotated)) +
+    geom_bar(stat = "identity") + 
+    coord_polar(theta = 'y') +
+    facet_grid(~plotMode, scales = "free_y",) +
+    theme_void() +
+    labs(fill = "") + 
+    scale_fill_manual(values = c("Yes" = "red", "No" = "grey70")) +
+    theme(legend.position = "bottom",
+          text=element_text(face = "bold", size = 10),
+          strip.clip = "off")
+
+ggsave("plots/Proportion_annotated_DAAs.pdf",
+        height=2.5, width=5, dpi=1200)
+
