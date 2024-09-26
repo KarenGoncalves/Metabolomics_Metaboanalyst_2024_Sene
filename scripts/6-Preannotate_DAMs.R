@@ -12,7 +12,7 @@ FC_threshold = 1
 #### Load data ####
 load("Results/Siggenes_DAAs.RData")
 annotation <- sapply(Analysis_modes, simplify = F, \(x) {
-    paste0("Inputs/LCMSMS_", x, "_identification.txt") %>%
+    paste0("Inputs/Corrected_LCMSMS_", x, "_identification.txt") %>%
         read_delim(delim = "\t", na = "null") %>%
         mutate(AnalysisMode = x)
 }) %>% list_rbind() 
