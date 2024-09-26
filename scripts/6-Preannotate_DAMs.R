@@ -63,7 +63,7 @@ annotation$Clean_name[names_to_correct] <-
     str_to_sentence(annotation$Clean_name[names_to_correct])
 
 write_delim(annotation, "Results/Annotation_clean_names.txt",
-            quote="needed", append="F", delim="\t")
+            quote="needed", delim="\t")
 #### Keep only significantly DAAs ####
 
 differential_abundance_sig <- 
