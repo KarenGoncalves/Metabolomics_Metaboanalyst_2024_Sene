@@ -28,13 +28,10 @@ differential_abundance_sig <-
              into = c("Rt", "Mz"), 
              sep = "/",  convert = T)
 
-DAM_ids <- differential_abundance_sig %>%
-    select(Rt, Mz, AnalysisMode) %>%
-    unique
 
 #### Get info on DAAs ####
 annotation_DAAs <- 
-    inner_join(annotation, DAM_ids,
+    inner_join(annotation, differential_abundance_sig,
                by = join_by("Average Rt(min)" == "Rt",
                             "Average Mz" == "Mz",
                             "AnalysisMode" == "AnalysisMode")) %>%
