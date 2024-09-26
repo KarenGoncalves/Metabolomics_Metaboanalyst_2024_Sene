@@ -6,29 +6,44 @@ library(RColorBrewer)
 Analysis_modes = c("HILIC_Positive",
                    "RP_Positive",
                    "RP_Negative")
-FDR_threshold = 0.05
+FDR_threshold = 0.01
 FC_threshold = 1
-
-kept_mets <- sapply(Analysis_modes, simplify = F, \(x){
-    mSetData=paste0("Results/", x, "_mSet.RData")
-    load(mSetData)
-    data.frame(MetID = mSet[["dataSet"]][["filt"]] %>% colnames,
-               Analysis_mode = x
-    )
-}) %>% list_rbind() %>%
-    separate(MetID, 
-             into = c("Average Rt(min)", "Average Mz"),
-             sep = "/",
-             convert = T)
+empty_vector =  "pPTGE30"
 
 #### Load data ####
 load("Results/Siggenes_DAAs.RData")
-
 annotation <- sapply(Analysis_modes, simplify = F, \(x) {
     paste0("Inputs/Corrected_LCMSMS_", x, "_identification.txt") %>%
         read_delim(delim = "\t", na = "null") %>%
         mutate(AnalysisMode = x)
-}) %>% list_rbind() %>%
+}) %>% list_rbind() 
+
+#### Keep only significantly DAAs ####
+differential_abundance_sig <- 
+    differential_abundance_all %>%
+    list_rbind %>% filter(!is.na(pValue),
+                          pValue < FDR_threshold,
+                          abs(FoldChange) > FC_threshold
+    ) %>% filter(grepl(empty_vector, Contrast)) %>%
+    separate(col = Metabolite, 
+             into = c("Rt", "Mz"), 
+             sep = "/",  convert = T)
+
+DAM_ids <- differential_abundance_sig %>%
+    select(Rt, Mz, AnalysisMode) %>%
+    unique
+tableContrast = unique(differential_abundance_sig %>%
+                           select(Contrast)) %>%
+    separate(col = Contrast,
+             into = c("Numerator", "Denominator"), sep = "_v_")
+
+#### Get info on DAAs ####
+Annotation_DAAs <- left_join(annotation,
+                             differential_abundance_sig,
+                             by = join_by("Average Rt(min)" == "Rt",
+                                          "Average Mz" == "Mz",
+                                          "AnalysisMode" == "AnalysisMode")) %>%
+    
     mutate(Clean_name = gsub("; (LC-|CE\\d).+$", "",
                              `Metabolite name`) %>%
                gsub(pattern="\\(*[Nn]ot validated.*",
@@ -61,138 +76,34 @@ annotation <- sapply(Analysis_modes, simplify = F, \(x) {
                gsub(pattern="7-benzyl-11,14-dimethyl-16-(2-methylpropyl)-10,13-di(propan-2-yl)-17-oxa-1,5,8,11,14-pentazabicyclo[17.3.0]docosane-2,6,9,12,15,18-hexone",
                     replacement="Cyclodepsipeptide", fixed=T) %>%
                gsub(pattern="7-hydroxy-3-(4-hydroxyphenyl)-8-((2S,3R,4R,5S,6R)-3,4,5-trihydroxy-6-(hydroxymethyl)tetrahydro-2H-pyran-2-yl)-4H-chromen-4-one",
-                    replacement="Isoflavonoid C-glycoside [1]", fixed=T)
+                    replacement="Isoflavonoid C-glycoside [1]", fixed=T)           
+           
     )
-
 
 # Replace with sentence case names
-names_to_correct <- annotation$Clean_name %in% 
+names_to_correct <- Annotation_DAAs$Clean_name %in% 
     c("THIAMINE", "ABIETIC ACID", "THIAMINE PYROPHOSPHATE", "lappaconitine")
-annotation$Clean_name[names_to_correct] <- 
-    str_to_sentence(annotation$Clean_name[names_to_correct])
+Annotation_DAAs$Clean_name[names_to_correct] <- 
+    str_to_sentence(Annotation_DAAs$Clean_name[names_to_correct])
 
-
-# Which Rts do no match between filtered data and annotation (keep annotation one)
-
-MZs_with_RT_mismatch <- annotation %>%
-    right_join(kept_mets, # keep all from kept_mets
-               by = join_by("Average Rt(min)","Average Mz",
-                            "AnalysisMode" == "Analysis_mode")) %>%
-    filter(is.na(`Metabolite name`)) %>%
-    select(2, 3, "AnalysisMode")
-
-
-MZs_with_RT_mismatch_corrected <- 
-    sapply(1:nrow(MZs_with_RT_mismatch), simplify = F, \(x) {
-    MZ_mismatch_info <- MZs_with_RT_mismatch[x, ]
-    
-    (annotation %>% 
-            filter(AnalysisMode == MZ_mismatch_info$AnalysisMode, 
-                   `Average Mz` %in% MZ_mismatch_info$`Average Mz`)) %>%
-        select(2, 3, "AnalysisMode") %>%
-        rename(Analysis_mode = AnalysisMode)
-} ) %>% list_rbind()
-
-kept_mets <- rbind(kept_mets,
-                   MZs_with_RT_mismatch_corrected)
-filtered_mets_annotation <- annotation %>%
-    inner_join(kept_mets,
-               by = join_by("Average Rt(min)","Average Mz",
-                            "AnalysisMode" == "Analysis_mode")) %>%
-    mutate(Annotated = factor(ifelse(`Metabolite name` != "Unknown" &
-                                         !(grepl("w/o MS2", `Metabolite name`)),
-                                     "Yes", "No"),
-                              levels = c("Yes", "No")
-    )
-    )
-
-write_delim(filtered_mets_annotation,
-            "Results/Annotation_clean_names.txt",
-            delim = "\t", na = "NA")
-#### Keep only significantly DAAs ####
-differential_abundance_sig <- 
-    differential_abundance_all %>%
-    list_rbind %>% filter(!is.na(pValue),
-                          pValue < FDR_threshold,
-                          abs(FoldChange) > FC_threshold
-    ) %>%
-    separate(col = Metabolite, 
-             into = c("Rt", "Mz"), 
-             sep = "/",  convert = T)
-
-DAM_ids <- differential_abundance_sig %>%
-    select(Rt, Mz, AnalysisMode) %>%
-    unique
-tableContrast = unique(differential_abundance_sig %>%
-                           select(Contrast)) %>%
-    separate(col = Contrast,
-             into = c("Numerator", "Denominator"), sep = "_v_")
-
-#### Get info on DAAs ####
-Annotation_DAAs <- left_join(annotation,
-          differential_abundance_sig,
-          by = join_by("Average Rt(min)" == "Rt",
-                       "Average Mz" == "Mz",
-                       "AnalysisMode" == "AnalysisMode")) 
-
-write_delim(Annotation_DAAs,
-            "Results/differentially_abundant_analytes_annotation.txt",
-            delim = "\t", na = "NA")
+# write_delim(Annotation_DAAs, 
+#             "Results/differentially_abundant_analytes_annotation.txt",
+#             delim = "\t", na = "NA")
 # Annotation_DAAs %>% filter(`Metabolite name` != "Unknown") %>% 
 #     select(`Metabolite name`, Clean_name, AnalysisMode, 
 #            plotContrast, FoldChange, pValue, padj) %>% 
 #     arrange(plotContrast, FoldChange) %>% View
 
-#### Plot proportion of annotated DAAs ####
-proportion_detected_annotated <- 
-    filtered_mets_annotation %>%
-    group_by(Annotated, AnalysisMode) %>%
-    summarize(Analytes = length(`Metabolite name`)) %>%
-    group_by(AnalysisMode) %>%
-    summarize(Analytes = Analytes,
-              Annotated = Annotated,
-              Total = sum(Analytes)) %>%
-    mutate(Proportion = Analytes / Total,
-           Mode =
-               case_when(AnalysisMode == "HILIC_Positive" ~ "HILIC\nPositive",
-                         AnalysisMode == "RP_Positive" ~ "Reversed phase\nPositive",
-                         .default = "Reversed phase\nNegative")) 
-
-proportion_detected_annotated %>%
-    ggplot(aes(x = "", Proportion, fill=Annotated,
-               label = Analytes)) +
-    geom_col() +
-    geom_text_repel(aes(color = Annotated),
-                    show.legend = F) +
-    facet_grid(~Mode, scales = "free_y") +
-    coord_polar(theta = "y", start = 0) +
-    scale_fill_manual(values = c("No" = "grey", "Yes" = "red")
-                      ) +
-    scale_color_manual(values = c("No" = "grey20", "Yes" = "red")
-    ) +
-    theme_void() +
-    theme(legend.position = "bottom")
-
-ggsave("plots/Proportion_annotated_DAAs.pdf",
-       height=2.5, width=5, dpi=1200)
-
 
 #### Heatmap of annotated analytes ####
-heatmap_data <- read_delim("Results/HeatmapData_longFormat.txt")  %>%
-    separate(col = Metabolite, 
-             into = c("Rt", "Mz"), 
-             sep = "/",  convert = T) %>%
-    inner_join(Annotation_DAAs[, c("Clean_name", "INCHIKEY",
-                                   "AnalysisMode", "Formula",
-                                   "Manually modified for annotation", 
-                                   "Average Rt(min)", "Average Mz")] %>%
-                   filter(Clean_name != "Unknown"),
-               by = join_by("Rt" == "Average Rt(min)",
-                            "Mz" == "Average Mz",
-                            "AnalysisMode" == "AnalysisMode")) %>% 
+heatmap_data <- 
+    Annotation_DAAs %>%
+    rename("Rt" = "Average Rt(min)",
+           "Mz" = "Average Mz",
+           "AnalysisMode" = "AnalysisMode") %>% 
     mutate(Metabolite_nameUnique = paste0(Clean_name, " ", 
                                           Rt, "/", Mz)
-    )  %>% 
+    ) %>% filter(grepl(empty_vector, Contrast))  %>% 
     filter(Clean_name != "Unknown" &
                !grepl("w/o MS2", Clean_name)) 
 
@@ -215,13 +126,13 @@ heatmap_data$Metabolite_nameplot <-
            })
 
 order_mets = (heatmap_data %>%
-                   dplyr::select(Contrast, FoldChange, Metabolite_nameplot) %>%
+                  dplyr::select(Contrast, FoldChange, Metabolite_nameplot) %>%
                   unique() %>%
-                   pivot_wider(names_from = Contrast, 
-                               values_from = FoldChange,
-                               values_fill=0) %>%
-                   data.frame(row.names = .$Metabolite_nameplot))[-1] %>%
-                  as.matrix() %>% dist() %>% hclust
+                  pivot_wider(names_from = Contrast, 
+                              values_from = FoldChange,
+                              values_fill=0) %>%
+                  data.frame(row.names = .$Metabolite_nameplot))[-1] %>%
+    as.matrix() %>% dist() %>% hclust
 
 color_limit = max(abs(heatmap_data$FoldChange)) %>%
     ceiling()
@@ -230,16 +141,14 @@ color_scale = c(-color_limit, -color_limit/2, #-FC_threshold,
                 color_limit/2, color_limit)
 colors = rev(brewer.pal(5, "RdBu"))
 names(colors) = color_scale
-colors[c("0")] = "white"
+colors["0"] = "white"
+
 heatmap_data %>%
     mutate(ordered_mets = Metabolite_nameplot %>%
                factor(levels = order_mets$labels[order_mets$order]),
-           Contrast_ordered = plotContrast %>%
-               factor(levels = sapply(1:6, \(x) paste(tableContrast$Numerator[x], "vs",
-                                                      tableContrast$Denominator[x]))
-               )
+           strainsInterest = gsub(" .+", "", plotContrast)
     ) %>%
-    ggplot(aes(y=ordered_mets, x = Contrast_ordered, fill = FoldChange)) +
+    ggplot(aes(y=ordered_mets, x = strainsInterest, fill = FoldChange)) +
     geom_tile() +
     scale_fill_gradientn(colors = colors, 
                          name = "Fold change",
@@ -248,27 +157,13 @@ heatmap_data %>%
                          labels = color_scale) +
     labs(x = "", y="", fill="Fold Change") +
     theme_classic() +
-    theme(legend.position = "bottom",
-          axis.text.x = element_text(angle=45, hjust=1, vjust=1),
+    theme(
+        # legend.position = "bottom",
           axis.text.y = element_text(size=7),
-          legend.key.height = unit(5, "mm"),
-          legend.key.width = unit(1, "cm"),
-          #axis.ticks.x = element_blank()
-          )
-ggsave("plots/Annotated_heatmap_allModes.pdf",
-       height=8, width=7, dpi=1200)
+          # legend.key.height = unit(5, "mm"),
+          # legend.key.width = unit(1, "cm"),
+          # #axis.ticks.x = element_blank()
+    )
 
-heatmap_data %>%
-    unique %>% 
-    inner_join(Annotation_DAAs, 
-               by = c("INCHIKEY", "Clean_name", 
-                      "plotContrast", "FoldChange", 
-                      "padj", "AnalysisMode", "Contrast",
-                      "pValue")
-               ) %>%
-    select(Metabolite_nameplot, INCHIKEY, Clean_name) %>%
-    filter(!grepl("w/o MS2", Clean_name)) %>%
-    unique %>%
-    write_delim("Results/Metabolite_names_plots.txt",
-                delim="\t", append = F, quote="none")
-    
+ggsave("plots/Annotated_heatmap_allModes_24092024.pdf",
+       height=8, width=7, dpi=1200)
