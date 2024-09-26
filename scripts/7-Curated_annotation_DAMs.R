@@ -89,7 +89,7 @@ heatmap_data %>%
     theme_classic() +
     theme(
         # legend.position = "bottom",
-          axis.text.y = element_text(size=7),
+          axis.text = element_text(size=10),
           # legend.key.height = unit(5, "mm"),
           # legend.key.width = unit(1, "cm"),
           # #axis.ticks.x = element_blank()
