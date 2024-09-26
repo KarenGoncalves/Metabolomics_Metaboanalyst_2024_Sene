@@ -5,10 +5,11 @@
 #mkdir /e/Metabolomics_Metaboanalyst_2024_Sene/scripts
 
 create_dataset () {
-col_start=$1
-input=$2
-output=$3
-col_end=$(awk 'END {print NF}' ${input})
+input=$1
+output=$2
+col_start=$3
+nsamples=$4
+col_end=$((${col_start} + ${nsamples}))
 
 head -n5 "${input}" |\
  tail -n 1 | cut -f 36-52 > tmp_header
@@ -32,10 +33,10 @@ rm tmp_file tmp_RowNames tmp_Raw_height tmp_row2 tmp_header
 
 #Positive 
 
-create_dataset 36 RAW_DATA/LCMSMS_RP_Positive_MSDial.txt Inputs/LCMSMS_RP_Positive_rawHeight.txt
+create_dataset RAW_DATA/LCMSMS_RP_Positive_MSDial.txt Inputs/LCMSMS_RP_Positive_rawHeight.txt 36 17
 
 ##Negative 
-create_dataset 36 RAW_DATA/LCMSMS_RP_Negative_MSDial.txt Inputs/LCMSMS_RP_Negative_rawHeight.txt
+create_dataset RAW_DATA/LCMSMS_RP_Negative_MSDial.txt Inputs/LCMSMS_RP_Negative_rawHeight.txt 36 17
 
 ##HILIC 
-create_dataset 36 RAW_DATA/LCMSMS_HILIC_Positive_MSDial.txt Inputs/LCMSMS_HILIC_Positive_rawHeight.txt
+create_dataset RAW_DATA/LCMSMS_HILIC_Positive_MSDial.txt Inputs/LCMSMS_HILIC_Positive_rawHeight.txt 36 18 
