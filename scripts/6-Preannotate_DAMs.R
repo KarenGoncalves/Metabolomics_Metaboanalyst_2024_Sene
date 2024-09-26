@@ -15,31 +15,12 @@ annotation <- sapply(Analysis_modes, simplify = F, \(x) {
     paste0("Inputs/Corrected_LCMSMS_", x, "_identification.txt") %>%
         read_delim(delim = "\t", na = "null") %>%
         mutate(AnalysisMode = x)
-}) %>% list_rbind() 
-
-#### Keep only significantly DAAs ####
-differential_abundance_sig <- 
-    differential_abundance_all %>%
-    list_rbind %>% filter(!is.na(pValue),
-                          pValue < FDR_threshold,
-                          abs(FoldChange) > FC_threshold
-    ) %>%
-    separate(col = Metabolite, 
-             into = c("Rt", "Mz"), 
-             sep = "/",  convert = T)
-
-
-#### Get info on DAAs ####
-annotation_DAAs <- 
-    inner_join(annotation, differential_abundance_sig,
-               by = join_by("Average Rt(min)" == "Rt",
-                            "Average Mz" == "Mz",
-                            "AnalysisMode" == "AnalysisMode")) %>%
+}) %>% list_rbind() %>%
     mutate(Annotation = 
                ifelse(
                    `MS/MS matched` == T & !grepl("w/o MS2", `Metabolite name`),
                    `Metabolite name`, "Unknown"
-                   ),
+               ),
            Clean_name = gsub("; (LC-|CE\\d).+$", "",
                              Annotation) %>%
                gsub(pattern="\\(*[Nn]ot validated.*",
@@ -75,12 +56,33 @@ annotation_DAAs <-
                     replacement="Isoflavonoid C-glycoside [1]", fixed=T)           
            
     )
-
 # Replace with sentence case names
-names_to_correct <- annotation_DAAs$Clean_name %in% 
+names_to_correct <- annotation$Clean_name %in% 
     c("THIAMINE", "ABIETIC ACID", "THIAMINE PYROPHOSPHATE", "lappaconitine")
-annotation_DAAs$Clean_name[names_to_correct] <- 
-    str_to_sentence(annotation_DAAs$Clean_name[names_to_correct])
+annotation$Clean_name[names_to_correct] <- 
+    str_to_sentence(annotation$Clean_name[names_to_correct])
+
+write_delim(annotation, "Results/Annotation_clean_names.txt",
+            quote="needed", append="F", delim="\t")
+#### Keep only significantly DAAs ####
+
+differential_abundance_sig <- 
+    differential_abundance_all %>%
+    list_rbind %>% filter(!is.na(pValue),
+                          pValue < FDR_threshold,
+                          abs(FoldChange) > FC_threshold
+    ) %>%
+    separate(col = Metabolite, 
+             into = c("Rt", "Mz"), 
+             sep = "/",  convert = T)
+
+
+#### Get info on DAAs ####
+annotation_DAAs <- 
+    inner_join(annotation, differential_abundance_sig,
+               by = join_by("Average Rt(min)" == "Rt",
+                            "Average Mz" == "Mz",
+                            "AnalysisMode" == "AnalysisMode")) 
 
 write_delim(annotation_DAAs,
             file="Results/annotation_DAAs.txt",
